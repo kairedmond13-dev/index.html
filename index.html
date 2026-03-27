@@ -1,245 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>GeoBrain</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>GeoBrain Ultra</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
 <style>
-/* ════ GLOBAL STYLES ════ */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f4f6f0;--green:#639922;--gl:#e8f0d8;--gm:#c8dda0;
-  --red:#ff4b2b;--blk:#1a1a1a;--wht:#ffffff;
-  --sh:8px 8px 0 #1a1a1a;--shsm:4px 4px 0 #1a1a1a;
-  --bd:3px solid #1a1a1a;--r:14px;
+:root {
+    --bg: #f0f2f5; --pri: #639922; --sec: #1a1a1a; --acc: #ff4b2b;
+    --card: #ffffff; --sh: 8px 8px 0px var(--sec); --sh-sm: 4px 4px 0px var(--sec);
+    --bd: 3px solid var(--sec); --r: 16px;
 }
-html,body{height:100%;overflow:hidden;touch-action:manipulation;background:var(--bg);font-family:'Nunito',sans-serif;}
-body{display:flex;flex-direction:column;}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Nunito', sans-serif; background: var(--bg); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-/* ════ AUTO-ADAPTIVE LAYOUT ════ */
-#main{display:flex;flex:1;overflow:hidden;position:relative;}
-#map{flex:1;height:100%;z-index:1;}
+/* ════ MENU ════ */
+#menu { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: 0.5s; }
+#menu.hide { transform: translateY(-100%); }
+.logo { font-family: 'Space Mono'; font-size: 3rem; font-weight: 700; margin-bottom: 2rem; }
+.logo span { color: var(--pri); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; }
+.btn-card { background: var(--card); border: var(--bd); border-radius: var(--r); padding: 20px; cursor: pointer; box-shadow: var(--sh); transition: 0.1s; text-align: center; }
+.btn-card:active { transform: translate(4px, 4px); box-shadow: 2px 2px 0 var(--sec); }
+.btn-card i { font-size: 2rem; display: block; margin-bottom: 10px; }
 
-/* PC Side Tray */
-#hist-tray {
-    position: absolute; right: 12px; top: 12px; bottom: 85px; 
-    width: 220px; z-index: 400; display: flex; flex-direction: column;
-    transition: transform 0.3s;
+/* ════ GAME LAYOUT ════ */
+#header { background: var(--card); border-bottom: var(--bd); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+#main { flex: 1; position: relative; display: flex; }
+#map { flex: 1; z-index: 1; }
+
+/* 📱 ADAPTIVE UI */
+#clue-box { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: var(--card); border: var(--bd); border-radius: var(--r); box-shadow: var(--sh); padding: 15px; z-index: 500; }
+#search-box { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: var(--card); border: var(--bd); border-radius: var(--r); box-shadow: var(--sh); padding: 12px; z-index: 500; }
+#history { position: absolute; right: 15px; top: 15px; bottom: 100px; width: 220px; pointer-events: none; z-index: 400; display: flex; flex-direction: column; gap: 10px; }
+
+@media (max-width: 768px) {
+    #history { display: none; }
+    .grid { grid-template-columns: 1fr; }
+    .logo { font-size: 2rem; }
 }
 
-/* UI Elements */
-#clue-card{position:absolute; top:12px; left:50%; transform:translateX(-50%); background:var(--wht); border:var(--bd); border-radius:var(--r); box-shadow:var(--sh); padding:12px 16px; z-index:500; width:90%; max-width:420px;}
-#search-panel{position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:90%; max-width:500px; z-index:500;}
-#search-wrap{background:var(--wht); border:var(--bd); border-radius:var(--r); box-shadow:var(--sh); padding:10px;}
+/* ════ ELEMENTS ════ */
+input { width: 100%; height: 50px; border: 2px solid var(--sec); border-radius: 10px; padding: 0 15px; font-size: 1rem; font-weight: 700; outline: none; background: var(--bg); }
+.guess-btn { height: 50px; padding: 0 25px; background: var(--pri); color: #fff; border: 2px solid var(--sec); border-radius: 10px; font-family: 'Space Mono'; font-weight: 700; cursor: pointer; box-shadow: var(--sh-sm); }
+.ac-list { position: absolute; bottom: 100%; left: 0; right: 0; background: #fff; border: var(--bd); border-radius: 12px; max-height: 200px; overflow-y: auto; display: none; margin-bottom: 10px; }
+.ac-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: 700; }
+.hi-card { background: #fff; border: 2px solid var(--sec); padding: 10px; border-radius: 10px; box-shadow: 4px 4px 0 var(--sec); pointer-events: auto; animation: slideIn 0.3s forwards; }
 
-/* 📱 MOBILE OVERRIDES (Auto-applied by JS) */
-body.is-mobile #hist-tray { display: none; }
-body.is-mobile #clue-card { top: 8px; width: 95%; padding: 8px; }
-body.is-mobile #search-panel { bottom: 15px; width: 95%; }
-
-/* ════ MENU & MODALS ════ */
-#mode-screen{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-#mode-screen.hidden{display:none}
-.ms-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:15px; width:100%; max-width:500px;}
-.ms-card{background:var(--wht); border:var(--bd); border-radius:var(--r); padding:20px; cursor:pointer; box-shadow:var(--sh); text-align:center;}
-.ms-card:active{transform:translate(4px,4px); box-shadow:2px 2px 0 var(--blk);}
-
-/* (Shared Bits) */
-#header{background:var(--wht); border-bottom:var(--bd); padding:10px 15px; display:flex; align-items:center; justify-content:space-between; z-index:1000;}
-#logo{font-family:'Space Mono'; font-weight:700; font-size:22px;}
-#logo span{color:var(--green)}
-.heart{font-size:18px;}
-.hi{background:white; border:2px solid #000; padding:8px; border-radius:8px; margin-bottom:5px; font-size:12px; box-shadow:2px 2px 0 #000;}
-
-#ac-list{position:absolute; bottom:100%; left:0; right:0; background:white; border:var(--bd); border-radius:10px; max-height:150px; overflow-y:auto; display:none; z-index:1000;}
-.ac-item{padding:10px; border-bottom:1px solid #eee; cursor:pointer;}
-
-#result, #gameover { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10000; display:none; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
-.res-card{background:white; border:var(--bd); border-radius:20px; padding:30px; text-align:center; width:90%; max-width:400px;}
+/* ════ MODALS ════ */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); color: #fff; text-align: center; padding: 20px; }
+.modal.show { display: flex; flex-direction: column; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
 </style>
 </head>
 <body>
 
-<div id="mode-screen">
-  <div style="font-family:'Space Mono'; font-size:40px; font-weight:700; margin-bottom:5px;">Geo<span>Brain</span></div>
-  <p style="margin-bottom:30px; color:#666; font-weight:700;">WORLD GEOGRAPHY CHALLENGE</p>
-  <div class="ms-grid">
-    <div class="ms-card" style="background:var(--green); color:white;" onclick="initGame('solo')">
-      <div style="font-size:30px">🎯</div><b style="font-family:'Space Mono'">SOLO</b>
+<div id="menu">
+    <div class="logo">Geo<span>Brain</span></div>
+    <div class="grid">
+        <div class="btn-card" onclick="startGame('solo')"><i>🎯</i><b>SOLO</b></div>
+        <div class="btn-card" onclick="startGame('ai')"><i>🤖</i><b>VS AI</b></div>
+        <div class="btn-card" onclick="showPnP()"><i>🤝</i><b>PASS & PLAY</b></div>
+        <div class="btn-card" onclick="showOnline()"><i>🌐</i><b>ONLINE</b></div>
     </div>
-    <div class="ms-card" onclick="initGame('ai')">
-      <div style="font-size:30px">🤖</div><b style="font-family:'Space Mono'">VS AI</b>
-    </div>
-    <div class="ms-card" onclick="alert('Pass & Play coming in next update!')">
-      <div style="font-size:30px">🤝</div><b style="font-family:'Space Mono'">P&P</b>
-    </div>
-    <div class="ms-card" onclick="alert('Multiplayer requires Server ID')">
-      <div style="font-size:30px">🌐</div><b style="font-family:'Space Mono'">ONLINE</b>
-    </div>
-  </div>
 </div>
 
 <div id="header">
-  <div id="logo" onclick="location.reload()">Geo<span>Brain</span></div>
-  <div id="hearts">❤️❤️❤️❤️❤️</div>
-  <div id="score-box" style="font-family:'Space Mono'; font-weight:700; background:var(--blk); color:white; padding:5px 10px; border-radius:5px;">0</div>
+    <div style="font-family:'Space Mono'; font-weight:700;" onclick="location.reload()">Geo<span>Brain</span></div>
+    <div id="stats" style="font-weight:900;">Round 1/10 | 0 Pts</div>
+    <div id="lives">❤️❤️❤️❤️❤️</div>
 </div>
 
 <div id="main">
-  <div id="map"></div>
-  
-  <div id="clue-card">
-    <div style="font-family:'Space Mono'; font-size:10px; color:var(--green); font-weight:700; margin-bottom:5px;">HINT <span id="hint-num">1</span>/4</div>
-    <div id="clue-text" style="font-weight:700; font-size:15px; line-height:1.4;">Select a mode to start...</div>
-    <button id="hint-btn" style="width:100%; margin-top:10px; padding:8px; border:2px solid #000; border-radius:8px; background:var(--gl); font-weight:700; cursor:pointer;">REVEAL CLUE (-100 pts)</button>
-  </div>
-
-  <div id="hist-tray">
-    <div style="font-family:'Space Mono'; font-size:10px; color:#888; margin-bottom:8px;">PREVIOUS GUESSES</div>
-    <div id="hist-list"></div>
-  </div>
-
-  <div id="search-panel">
-    <div id="search-wrap">
-      <div style="position:relative">
-        <div id="ac-list"></div>
-        <div style="display:flex; gap:8px;">
-          <input id="guess-in" type="text" placeholder="Enter country..." style="flex:1; height:45px; border:2px solid #000; border-radius:8px; padding:0 12px; font-weight:700; outline:none; background:var(--bg);" autocomplete="off">
-          <button id="guess-btn" style="height:45px; padding:0 20px; background:var(--green); color:white; border:2px solid #000; border-radius:8px; font-family:'Space Mono'; font-weight:700; cursor:pointer;">GUESS</button>
+    <div id="map"></div>
+    
+    <div id="clue-box">
+        <div style="display:flex; justify-content:space-between; font-family:'Space Mono'; font-size:12px; color:var(--pri); margin-bottom:8px;">
+            <span id="clue-label">CLUE 1</span>
+            <span id="clue-count">1/4</span>
         </div>
-      </div>
+        <div id="clue-text" style="font-weight:700; font-size:1.1rem; min-height:50px;">Fetching global data...</div>
+        <button onclick="revealHint()" style="width:100%; margin-top:12px; padding:10px; border:2px solid #000; border-radius:8px; background:var(--bg); font-weight:700; cursor:pointer;">NEXT HINT (-100 pts)</button>
     </div>
-  </div>
+
+    <div id="history"></div>
+
+    <div id="search-box">
+        <div style="position:relative">
+            <div id="ac-list" class="ac-list"></div>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="guess-input" placeholder="Enter country name..." autocomplete="off">
+                <button class="guess-btn" onclick="makeGuess()">GUESS</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div id="result" onclick="this.style.display='none'; nextRound();">
-  <div class="res-card">
-    <div id="res-flag" style="font-size:60px"></div>
-    <h2 id="res-name" style="font-family:'Space Mono'"></h2>
-    <p id="res-dist" style="font-size:24px; font-weight:900; color:var(--green); margin:15px 0;"></p>
-    <p>Tap anywhere to continue</p>
-  </div>
+<div id="pnp-setup" class="modal">
+    <h2 style="font-family:'Space Mono'; margin-bottom:20px;">Pass & Play</h2>
+    <input type="text" id="p1-name" placeholder="Player 1 Name" style="max-width:300px; margin-bottom:10px;">
+    <input type="text" id="p2-name" placeholder="Player 2 Name" style="max-width:300px; margin-bottom:20px;">
+    <button class="guess-btn" onclick="startGame('pnp')">START GAME</button>
+</div>
+
+<div id="online-setup" class="modal">
+    <h2 style="font-family:'Space Mono'; margin-bottom:20px;">Online Room</h2>
+    <div id="room-code-display" style="font-size:2rem; letter-spacing:10px; background:#fff; color:#000; padding:15px; border-radius:10px; margin-bottom:20px;">----</div>
+    <p id="online-status">Creating Room...</p>
+    <div style="margin-top:20px; display:flex; gap:10px; flex-direction:column;">
+        <input type="text" id="join-code" placeholder="Enter Friend's Code" style="max-width:300px; text-align:center;">
+        <button class="guess-btn" onclick="joinRoom()">JOIN ROOM</button>
+    </div>
+</div>
+
+<div id="result-modal" class="modal" onclick="this.classList.remove('show'); nextRound();">
+    <div id="res-content" style="background:#fff; color:#000; padding:40px; border-radius:20px; border:4px solid #000; box-shadow:15px 15px 0 var(--pri);">
+        <h1 id="res-emoji" style="font-size:4rem">🌍</h1>
+        <h2 id="res-country" style="font-family:'Space Mono'">Country Name</h2>
+        <p id="res-dist" style="font-size:1.5rem; font-weight:900; margin:15px 0;">0km</p>
+        <p>Tap to continue</p>
+    </div>
 </div>
 
 <script>
-// ════ DATA ════
-const COUNTRIES=[
-    {name:"France",flag:"🇫🇷",lat:46.22,lng:2.21,clues:["Home to the Eiffel Tower","Famous for wine, cheese, and fashion","Largest country in the EU by land area","Borders Spain, Italy, and Germany"]},
-    {name:"Japan",flag:"🇯🇵",lat:36.20,lng:138.25,clues:["An archipelago in East Asia","Land of the Rising Sun","Home to Mount Fuji and Sushi","Hosted the 2020 Olympics in Tokyo"]},
-    {name:"Brazil",flag:"🇧🇷",lat:-14.23,lng:-51.92,clues:["Largest country in South America","Home to the Amazon Rainforest","Famous for Carnival and Football","Official language is Portuguese"]},
-    {name:"Egypt",flag:"🇪🇬",lat:26.82,lng:30.80,clues:["Located in Northeast Africa","Home to the Great Pyramids","The Nile River flows through it","Connects Africa to the Middle East"]},
-    {name:"Australia",flag:"🇦🇺",lat:-25.27,lng:133.77,clues:["The world's smallest continent","Home to Kangaroos and Koalas","Great Barrier Reef is off its coast","Capital city is Canberra"]}
-];
+// ════ STATE & API ════
+let countries = [];
+let state = { mode: 'solo', round: 1, score: 0, lives: 5, target: null, hintIdx: 0, used: [], players: [], curP: 0 };
+let peer, conn;
 
-// ════ AUTO-DETECTION ════
-function detectDevice() {
-    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 768);
-    document.body.classList.toggle('is-mobile', isMobile);
-    console.log("Device mode:", isMobile ? "Mobile" : "Desktop");
-}
-window.addEventListener('resize', detectDevice);
-detectDevice();
-
-// ════ GAME ENGINE ════
-let state = { round: 1, score: 0, hearts: 5, cur: null, hintIdx: 0, used: [] };
-const map = L.map('map', {zoomControl: false}).setView([20, 0], 2);
+const map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-function initGame(mode) {
-    document.getElementById('mode-screen').classList.add('hidden');
+// 🚀 FETCH ALL COUNTRIES (Shortcut trick)
+async function loadData() {
+    const res = await fetch('https://restcountries.com/v3.1/all?fields=name,latlng,flags,region,subregion,capital,currencies');
+    const data = await res.json();
+    countries = data.map(c => ({
+        name: c.name.common,
+        lat: c.latlng[0],
+        lng: c.latlng[1],
+        flag: c.flags.emoji,
+        clues: [
+            `This country is located in ${c.region} (${c.subregion})`,
+            `The capital city is ${c.capital ? c.capital[0] : 'Unknown'}`,
+            `They use the ${Object.values(c.currencies || {})[0]?.name || 'local'} currency`,
+            `Its flag features these colors: ${c.name.common}... wait, that's too easy!`
+        ]
+    }));
+    document.getElementById('clue-text').textContent = "Ready! Choose a mode.";
+}
+loadData();
+
+// ════ GAME LOGIC ════
+function startGame(mode) {
+    state.mode = mode;
+    document.getElementById('menu').classList.add('hide');
+    document.getElementById('pnp-setup').classList.remove('show');
     nextRound();
 }
 
 function nextRound() {
-    if(state.round > 5 || state.hearts <= 0) return alert("Game Over! Score: " + state.score);
+    if(state.lives <= 0 || state.round > 10) return location.reload();
     
     state.hintIdx = 0;
-    const pool = COUNTRIES.filter(c => !state.used.includes(c.name));
-    state.cur = pool[Math.floor(Math.random() * pool.length)];
-    state.used.push(state.cur.name);
+    const pool = countries.filter(c => !state.used.includes(c.name));
+    state.target = pool[Math.floor(Math.random() * pool.length)];
+    state.used.push(state.target.name);
     
+    // Sync if Online Host
+    if(conn && state.isHost) conn.send({ type: 'sync', target: state.target.name });
+
     updateUI();
+    map.flyTo([20, 0], 2);
 }
 
 function updateUI() {
-    document.getElementById('clue-text').textContent = state.cur.clues[state.hintIdx];
-    document.getElementById('hint-num').textContent = state.hintIdx + 1;
-    document.getElementById('score-box').textContent = state.score;
-    document.getElementById('hearts').textContent = "❤️".repeat(state.hearts);
+    document.getElementById('stats').textContent = `Round ${state.round}/10 | ${state.score} Pts`;
+    document.getElementById('lives').textContent = "❤️".repeat(state.lives);
+    document.getElementById('clue-text').textContent = state.target.clues[state.hintIdx];
+    document.getElementById('clue-count').textContent = `${state.hintIdx + 1}/4`;
 }
 
-document.getElementById('hint-btn').onclick = () => {
+function revealHint() {
     if(state.hintIdx < 3) {
         state.hintIdx++;
         state.score = Math.max(0, state.score - 100);
         updateUI();
     }
-};
+}
 
-// ════ GUESSING ════
-document.getElementById('guess-btn').onclick = () => {
-    const input = document.getElementById('guess-in').value.trim().toLowerCase();
-    const match = COUNTRIES.find(c => c.name.toLowerCase() === input);
-    
-    if(!match) return alert("Pick a real country!");
+function makeGuess() {
+    const val = document.getElementById('guess-input').value.trim();
+    const match = countries.find(c => c.name.toLowerCase() === val.toLowerCase());
+    if(!match) return;
 
-    const dist = getDist(match.lat, match.lng, state.cur.lat, state.cur.lng);
-    const isCorrect = match.name === state.cur.name;
+    const dist = getDistance(match.lat, match.lng, state.target.lat, state.target.lng);
+    const isCorrect = match.name === state.target.name;
 
     if(isCorrect) {
         state.score += (1000 - (state.hintIdx * 200));
     } else {
-        if(dist > 2000) state.hearts--;
-        state.score += Math.max(0, 500 - Math.round(dist/10));
+        if(dist > 1500) state.lives--;
+        state.score += Math.max(0, Math.round(500 - (dist/10)));
     }
 
-    // Add to history tray (PC only)
-    const hi = document.createElement('div');
-    hi.className = 'hi';
-    hi.innerHTML = `<b>${match.name}</b> - ${Math.round(dist)}km`;
-    document.getElementById('hist-list').prepend(hi);
+    // Add to history tray
+    const hist = document.getElementById('history');
+    const card = document.createElement('div');
+    card.className = 'hi-card';
+    card.innerHTML = `<b>${match.flag} ${match.name}</b><br><small>${Math.round(dist)}km away</small>`;
+    hist.prepend(card);
 
-    // Show Result
-    document.getElementById('res-flag').textContent = state.cur.flag;
-    document.getElementById('res-name').textContent = state.cur.name;
-    document.getElementById('res-dist').textContent = isCorrect ? "🎯 PERFECT!" : Math.round(dist) + "km away";
-    document.getElementById('result').style.display = 'flex';
-    document.getElementById('guess-in').value = "";
+    // Show result
+    document.getElementById('res-emoji').textContent = state.target.flag;
+    document.getElementById('res-country').textContent = state.target.name;
+    document.getElementById('res-dist').textContent = isCorrect ? "PERFECT! 🎯" : `${Math.round(dist)}km away`;
+    document.getElementById('result-modal').classList.add('show');
+    
+    document.getElementById('guess-input').value = "";
     state.round++;
-};
+}
 
-function getDist(lat1, lon1, lat2, lon2) {
+// ════ UTILS ════
+function getDistance(la1, lo1, la2, lo2) {
     const R = 6371;
-    const dLat = (lat2-lat1) * Math.PI/180;
-    const dLon = (lon2-lon1) * Math.PI/180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const dLat = (la2-la1) * Math.PI/180;
+    const dLon = (lo2-lo1) * Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(la1*Math.PI/180) * Math.cos(la2*Math.PI/180) * Math.sin(dLon/2)**2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// Autocomplete logic
-document.getElementById('guess-in').oninput = (e) => {
+// Autocomplete
+document.getElementById('guess-input').oninput = (e) => {
     const val = e.target.value.toLowerCase();
     const list = document.getElementById('ac-list');
-    list.innerHTML = '';
-    if(!val) return list.style.display='none';
-
-    const matches = COUNTRIES.filter(c => c.name.toLowerCase().startsWith(val)).slice(0,5);
+    list.innerHTML = "";
+    if(!val) return list.style.display = "none";
+    
+    const matches = countries.filter(c => c.name.toLowerCase().includes(val)).slice(0, 5);
     matches.forEach(m => {
-        const d = document.createElement('div');
-        d.className = 'ac-item';
-        d.textContent = m.name;
-        d.onclick = () => {
-            document.getElementById('guess-in').value = m.name;
-            list.style.display = 'none';
-        };
-        list.appendChild(d);
+        const div = document.createElement('div');
+        div.className = 'ac-item';
+        div.textContent = `${m.flag} ${m.name}`;
+        div.onclick = () => { document.getElementById('guess-input').value = m.name; list.style.display="none"; };
+        list.appendChild(div);
     });
-    list.style.display = matches.length ? 'block' : 'none';
+    list.style.display = matches.length ? "block" : "none";
 };
+
+// ════ ONLINE ════
+function showOnline() {
+    document.getElementById('online-setup').classList.add('show');
+    const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+    document.getElementById('room-code-display').textContent = code;
+    peer = new Peer('GB-' + code);
+    state.isHost = true;
+    peer.on('connection', c => {
+        conn = c;
+        setupConn();
+        document.getElementById('online-status').textContent = "Connected! Starting...";
+        setTimeout(() => startGame('online'), 1000);
+    });
+}
+
+function joinRoom() {
+    const code = document.getElementById('join-code').value.toUpperCase();
+    peer = new Peer();
+    peer.on('open', () => {
+        conn = peer.connect('GB-' + code);
+        state.isHost = false;
+        setupConn();
+    });
+}
+
+function setupConn() {
+    conn.on('data', data => {
+        if(data.type === 'sync') {
+            state.target = countries.find(c => c.name === data.target);
+            startGame('online');
+        }
+    });
+}
+
+function showPnP() { document.getElementById('pnp-setup').classList.add('show'); }
 </script>
 </body>
 </html>
