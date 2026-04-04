@@ -1,3 +1,26 @@
+// Add this at the very top of your script section
+const NPOINT_URL = 'https://api.npoint.io/1444bc19129e647161b5';
+
+async function syncGlobalAdmin() {
+  try {
+    const response = await fetch(NPOINT_URL);
+    const cloudData = await response.json();
+    
+    if (cloudData) {
+      // This forces the game to use the Admin's cloud settings
+      window.ADM = cloudData; 
+      console.log("🌍 Synced with Global Admin Panel");
+      
+      // Update the hint button UI to match new settings
+      if(typeof updHintBtn === 'function') updHintBtn();
+    }
+  } catch (e) {
+    console.log("Offline mode: Using local backup settings");
+  }
+}
+
+// Run the sync immediately
+syncGlobalAdmin();
 <!DOCTYPE html>
 <html lang="en">
 <head>
