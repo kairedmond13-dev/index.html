@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GeoBrain Admin Panel 🛡️</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0f;--surface:#18181b;--surface2:#27272a;--border:#3f3f46;
+  --green:#639922;--gl:#1a2e0a;--gm:#2a4a10;
+  --gold:#f59e0b;--goldd:#d97706;
+  --red:#ef4444;--purple:#8b5cf6;--blue:#3b82f6;--cyan:#06b6d4;--pink:#ec4899;--orange:#f97316;
+  --wht:#fafafa;--muted:#71717a;
+  --sh:6px 6px 0 rgba(0,0,0,0.5);
+}
+html,body{min-height:100%;background:var(--bg);color:var(--wht);font-family:'Nunito',sans-serif}
+body{display:flex;flex-direction:column;min-height:100vh}
+
+/* ══ LOGIN SCREEN ══ */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+#login-screen.hidden{display:none}
+.login-box{background:var(--surface);border:2px solid var(--border);border-radius:20px;padding:40px;max-width:400px;width:100%;box-shadow:var(--sh);text-align:center}
+.login-logo{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;margin-bottom:4px}
+.login-logo span{color:var(--green)}
+.login-sub{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:32px}
+.login-label{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:left;margin-bottom:8px;display:block}
+.login-input{width:100%;padding:14px 16px;background:var(--surface2);border:2px solid var(--border);border-radius:12px;font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--wht);outline:none;text-align:center;letter-spacing:6px;transition:border-color 0.2s;margin-bottom:12px}
+.login-input:focus{border-color:var(--purple)}
+.login-input.shake{animation:shk 0.4s}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.login-err{font-size:12px;color:var(--red);font-weight:700;min-height:18px;margin-bottom:12px}
+.login-btn{width:100%;padding:15px;background:var(--purple);color:var(--wht);border:2px solid rgba(255,255,255,0.1);border-radius:12px;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.1s;box-shadow:0 4px 20px rgba(139,92,246,0.3)}
+.login-btn:hover{background:#7c3aed}
+.login-btn:active{transform:translateY(2px)}
+.login-hint{font-size:11px;color:var(--muted);margin-top:16px}
+
+/* ══ MAIN PANEL ══ */
+#panel{display:none;flex-direction:column;min-height:100vh}
+#panel.active{display:flex}
+
+/* TOP BAR */
+#topbar{background:var(--surface);border-bottom:2px solid var(--border);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-logo{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--wht)}
+.tb-logo span{color:var(--green)}
+.tb-badge{background:var(--purple);color:var(--wht);font-family:'Space Mono',monospace;font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;margin-left:8px;letter-spacing:1px}
+.tb-version{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-left:6px}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-link{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--green);background:var(--gl);border:1.5px solid var(--gm);padding:6px 12px;border-radius:8px;cursor:pointer;text-decoration:none;transition:all 0.1s}
+.tb-link:hover{background:var(--gm)}
+.logout-btn{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--muted);background:transparent;border:1.5px solid var(--border);padding:6px 12px;border-radius:8px;cursor:pointer;transition:all 0.1s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* CONTENT */
+#content{flex:1;padding:24px;max-width:1200px;width:100%;margin:0 auto}
+
+/* GRIDS */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+@media(max-width:900px){.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.grid2,.grid3{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.grid4{grid-template-columns:1fr}}
+
+/* STAT CARDS */
+.stat-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;cursor:default}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.green::before{background:var(--green)}
+.stat-card.purple::before{background:var(--purple)}
+.stat-card.gold::before{background:var(--gold)}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card.red::before{background:var(--red)}
+.stat-card.cyan::before{background:var(--cyan)}
+.stat-card.pink::before{background:var(--pink)}
+.sc-icon{font-size:28px;margin-bottom:8px}
+.sc-val{font-family:'Space Mono',monospace;font-size:32px;font-weight:700;color:var(--wht);line-height:1}
+.sc-label{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:6px}
+.sc-sub{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* SECTION CARDS */
+.card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px}
+.card-title{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.card-title-icon{font-size:16px}
+.card-title.green{color:var(--green)}
+.card-title.gold{color:var(--gold)}
+.card-title.red{color:var(--red)}
+.card-title.cyan{color:var(--cyan)}
+.card-title.blue{color:var(--blue)}
+.card-title.pink{color:var(--pink)}
+
+/* ROWS */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);gap:16px}
+.setting-row:last-child{border-bottom:none}
+.sr-left{flex:1}
+.sr-label{font-size:14px;font-weight:800;color:var(--wht)}
+.sr-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* INPUTS */
+.adm-input{padding:8px 14px;background:var(--surface2);border:2px solid var(--border);border-radius:10px;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--wht);outline:none;text-align:center;transition:border-color 0.2s;width:90px}
+.adm-input:focus{border-color:var(--purple)}
+.adm-input.wide{width:160px;text-align:left;font-size:12px;letter-spacing:0;font-family:'Nunito',sans-serif}
+.adm-input.full{width:100%;text-align:left;font-size:13px;letter-spacing:0;font-family:'Nunito',sans-serif}
+.adm-textarea{width:100%;padding:10px 14px;background:var(--surface2);border:2px solid var(--border);border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--wht);outline:none;resize:vertical;min-height:80px;transition:border-color 0.2s}
+.adm-textarea:focus{border-color:var(--purple)}
+.adm-select{padding:8px 14px;background:var(--surface2);border:2px solid var(--border);border-radius:10px;font-family:'Space Mono',monospace;font-size:12px;color:var(--wht);outline:none;cursor:pointer;transition:border-color 0.2s}
+.adm-select:focus{border-color:var(--purple)}
+.adm-pw-input{padding:8px 14px;background:var(--surface2);border:2px solid var(--border);border-radius:10px;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--wht);outline:none;width:100%;max-width:240px;transition:border-color 0.2s}
+.adm-pw-input:focus{border-color:var(--purple)}
+
+/* TOGGLE */
+.toggle{width:50px;height:28px;background:var(--border);border-radius:14px;border:2px solid rgba(255,255,255,0.1);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle.on-purple{background:var(--purple)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:var(--wht);border-radius:50%;transition:transform 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.4)}
+.toggle.on::after,.toggle.on-purple::after{transform:translateX(22px)}
+
+/* BUTTONS */
+.btn{padding:10px 20px;border-radius:10px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:all 0.15s}
+.btn-primary{background:var(--purple);color:var(--wht);border-color:rgba(255,255,255,0.1)}
+.btn-primary:hover{background:#7c3aed}
+.btn-green{background:var(--green);color:var(--wht)}
+.btn-green:hover{background:#527a1a}
+.btn-blue{background:var(--blue);color:var(--wht)}
+.btn-blue:hover{background:#2563eb}
+.btn-cyan{background:var(--cyan);color:#000}
+.btn-cyan:hover{background:#0891b2}
+.btn-pink{background:var(--pink);color:var(--wht)}
+.btn-pink:hover{background:#db2777}
+.btn-orange{background:var(--orange);color:var(--wht)}
+.btn-orange:hover{background:#ea580c}
+.btn-danger{background:transparent;color:var(--red);border-color:var(--red)}
+.btn-danger:hover{background:var(--red);color:var(--wht)}
+.btn-secondary{background:var(--surface2);color:var(--muted);border-color:var(--border)}
+.btn-secondary:hover{border-color:var(--wht);color:var(--wht)}
+.btn-gold{background:var(--gold);color:#1a1a1a}
+.btn-gold:hover{background:var(--goldd)}
+.btn:active{transform:translateY(1px)}
+.btn-sm{padding:6px 12px;font-size:10px}
+
+/* SAVE BANNER */
+#save-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--green);color:var(--wht);border-radius:12px;padding:12px 24px;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;z-index:9000;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+#save-banner.show{transform:translateX(-50%) translateY(0)}
+
+/* SCORES TABLE */
+.score-table{width:100%;border-collapse:collapse}
+.score-table th{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)}
+.score-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700}
+.score-table tr:last-child td{border-bottom:none}
+.score-table tr:hover td{background:var(--surface2)}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700}
+.rank-1{background:#f59e0b;color:#1a1a1a}
+.rank-2{background:#9ca3af;color:#1a1a1a}
+.rank-3{background:#cd7c2f;color:#1a1a1a}
+.rank-n{background:var(--surface2);color:var(--muted)}
+.score-val{font-family:'Space Mono',monospace;color:var(--green)}
+.score-date{font-size:11px;color:var(--muted)}
+
+/* ACTIVITY LOG */
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.activity-dot.green{background:var(--green)}.activity-dot.gold{background:var(--gold)}.activity-dot.red{background:var(--red)}.activity-dot.purple{background:var(--purple)}.activity-dot.blue{background:var(--blue)}.activity-dot.cyan{background:var(--cyan)}
+.activity-text{flex:1;font-size:13px;font-weight:700;color:var(--wht)}
+.activity-time{font-size:10px;color:var(--muted);flex-shrink:0}
+
+/* DANGER ZONE */
+.danger-zone{border:2px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px;background:rgba(239,68,68,0.05);margin-bottom:12px}
+.danger-title{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.danger-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}
+.danger-row:last-child{margin-bottom:0}
+.danger-label{font-size:13px;font-weight:700;color:var(--wht)}
+.danger-sub{font-size:11px;color:var(--muted)}
+
+/* TABS */
+.nav-tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:6px;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex-shrink:0;padding:8px 14px;border-radius:10px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;color:var(--muted);transition:all 0.15s;white-space:nowrap;border:none;background:transparent}
+.nav-tab.on{background:var(--surface2);color:var(--wht);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.tab-content{display:none}
+.tab-content.on{display:block}
+
+/* PASSWORD STRENGTH */
+.pw-strength{height:4px;border-radius:2px;margin-top:6px;transition:width 0.3s,background 0.3s;background:#ccc;width:0}
+.pw-strength.weak{width:33%;background:var(--red)}
+.pw-strength.medium{width:66%;background:var(--gold)}
+.pw-strength.strong{width:100%;background:var(--green)}
+
+/* INLINE MESSAGES */
+.inline-msg{font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;display:inline-block}
+.inline-msg.ok{background:rgba(99,153,34,0.15);color:var(--green)}
+.inline-msg.err{background:rgba(239,68,68,0.15);color:var(--red)}
+.inline-msg.warn{background:rgba(245,158,11,0.15);color:var(--gold)}
+
+/* COLOR THEME SWATCHES */
+.color-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.color-swatch{width:36px;height:36px;border-radius:10px;border:3px solid transparent;cursor:pointer;transition:all 0.15s;position:relative}
+.color-swatch.sel{border-color:var(--wht);transform:scale(1.15)}
+.color-swatch:hover{transform:scale(1.1)}
+.color-swatch .ck{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:16px}
+.color-swatch.sel .ck{display:flex}
+
+/* MAP STYLE CARDS */
+.map-style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:10px}
+.map-style-card{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;transition:all 0.15s;text-align:center}
+.map-style-card.sel{border-color:var(--purple);background:rgba(139,92,246,0.1)}
+.map-style-card:hover{border-color:var(--muted)}
+.map-style-preview{width:100%;height:50px;border-radius:8px;margin-bottom:8px;object-fit:cover;background:#333}
+.map-style-name{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--wht)}
+.map-style-sub{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* ACHIEVEMENT CARD */
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px}
+.ach-card{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+.ach-card.unlocked{border-color:var(--gold);background:rgba(245,158,11,0.07)}
+.ach-icon{font-size:28px;flex-shrink:0}
+.ach-name{font-size:13px;font-weight:800;color:var(--wht);margin-bottom:3px}
+.ach-desc{font-size:10px;color:var(--muted)}
+.ach-status{font-family:'Space Mono',monospace;font-size:9px;margin-top:5px;font-weight:700}
+.ach-status.done{color:var(--gold)}
+.ach-status.locked{color:var(--muted)}
+
+/* ANNOUNCEMENT BANNER PREVIEW */
+.ann-preview{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:16px;margin-top:12px}
+.ann-preview-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.ann-banner{border-radius:8px;padding:10px 14px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px}
+
+/* REGION PILLS */
+.region-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.region-pill{padding:6px 12px;background:var(--surface2);border:2px solid var(--border);border-radius:20px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;color:var(--muted);transition:all 0.15s;user-select:none}
+.region-pill.on{background:var(--green);border-color:var(--green);color:var(--wht)}
+.region-pill:hover:not(.on){border-color:var(--muted);color:var(--wht)}
+
+/* PRESET CARDS */
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:10px}
+.preset-card{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all 0.15s;text-align:center}
+.preset-card:hover{border-color:var(--purple);transform:translateY(-2px)}
+.preset-card:active{transform:translateY(0)}
+.preset-icon{font-size:32px;margin-bottom:8px}
+.preset-name{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--wht);margin-bottom:4px}
+.preset-desc{font-size:10px;color:var(--muted);line-height:1.4}
+
+/* PLAYER PROFILE */
+.player-profile-box{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:20px;display:flex;gap:16px;align-items:center;margin-bottom:16px}
+.player-avatar{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;border:2px solid var(--border);flex-shrink:0;cursor:pointer;transition:all 0.15s}
+.player-avatar:hover{border-color:var(--purple)}
+.player-info{flex:1}
+.player-name-big{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--wht);margin-bottom:4px}
+.player-meta{font-size:12px;color:var(--muted);font-weight:700}
+
+/* EMOJI PICKER */
+.emoji-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-width:300px}
+.ep-btn{width:36px;height:36px;border-radius:8px;background:var(--surface2);border:2px solid var(--border);font-size:18px;cursor:pointer;transition:all 0.1s;display:flex;align-items:center;justify-content:center}
+.ep-btn:hover{background:var(--surface);border-color:var(--purple)}
+.ep-btn.sel{border-color:var(--gold);background:rgba(245,158,11,0.1)}
+
+/* PROGRESS BAR */
+.progress-bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:4px;transition:width 0.5s}
+
+/* LIVE INDICATOR */
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:livepulse 1.5s infinite;display:inline-block;margin-right:6px}
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  #content{padding:16px}
+  .card{padding:16px}
+  .sc-val{font-size:24px}
+  .setting-row{flex-direction:column;align-items:flex-start;gap:12px}
+  .danger-row{flex-direction:column;align-items:flex-start}
+  #topbar{padding:0 12px}
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Geo<span>Brain</span></div>
+    <div class="login-sub">🛡️ Admin Panel v3.0</div>
+    <label class="login-label">Admin Password</label>
+    <input id="login-pw" class="login-input" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    <div id="login-err" class="login-err"></div>
+    <button class="login-btn" onclick="doLogin()">ENTER ADMIN →</button>
+    <div class="login-hint">Default password: <strong>admin12</strong></div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+  <div id="topbar">
+    <div style="display:flex;align-items:center">
+      <span class="tb-logo">Geo<span>Brain</span></span>
+      <span class="tb-badge">ADMIN</span>
+      <span class="tb-version">v3.0</span>
+    </div>
+    <div class="tb-right">
+      <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace"><span class="live-dot"></span>LIVE</span>
+      <a class="tb-link" onclick="openGame()">🎮 Open Game</a>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- STATS ROW -->
+    <div class="grid4" style="margin-bottom:16px" id="stat-row">
+      <div class="stat-card green">
+        <div class="sc-icon">🎮</div>
+        <div class="sc-val" id="st-played">0</div>
+        <div class="sc-label">Games Played</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="sc-icon">💰</div>
+        <div class="sc-val" id="st-coins">0</div>
+        <div class="sc-label">Player Coins</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="sc-icon">🔥</div>
+        <div class="sc-val" id="st-streak">0</div>
+        <div class="sc-label">Current Streak</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="sc-icon">🏆</div>
+        <div class="sc-val" id="st-best">0</div>
+        <div class="sc-label">Best Score</div>
+      </div>
+    </div>
+
+    <!-- NAV TABS -->
+    <div class="nav-tabs" id="nav-tabs">
+      <button class="nav-tab on" onclick="switchTab('game',this)">⚙️ Gameplay</button>
+      <button class="nav-tab" onclick="switchTab('players',this)">🏆 Leaderboard</button>
+      <button class="nav-tab" onclick="switchTab('profile',this)">👤 Player Profile</button>
+      <button class="nav-tab" onclick="switchTab('economy',this)">💰 Economy</button>
+      <button class="nav-tab" onclick="switchTab('appearance',this)">🎨 Appearance</button>
+      <button class="nav-tab" onclick="switchTab('regions',this)">🗺️ Regions</button>
+      <button class="nav-tab" onclick="switchTab('achievements',this)">🏅 Achievements</button>
+      <button class="nav-tab" onclick="switchTab('announce',this)">📢 Announce</button>
+      <button class="nav-tab" onclick="switchTab('presets',this)">🎯 Presets</button>
+      <button class="nav-tab" onclick="switchTab('daily',this)">🌟 Daily</button>
+      <button class="nav-tab" onclick="switchTab('activity',this)">📋 Activity</button>
+      <button class="nav-tab" onclick="switchTab('security',this)">🔐 Security</button>
+      <button class="nav-tab" onclick="switchTab('danger',this)">⚠️ Danger</button>
+    </div>
+
+    <!-- ═══ TAB: GAME SETTINGS ═══ -->
+    <div class="tab-content on" id="tab-game">
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🎯</span> Core Gameplay</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Number of Rounds</div><div class="sr-sub">How many rounds per game session (3–50)</div></div>
+          <input class="adm-input" id="cfg-rounds" type="number" min="3" max="50" value="10"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Difficulty</div><div class="sr-sub">Affects score multiplier for correct guesses</div></div>
+          <select class="adm-select" id="cfg-diff">
+            <option value="easy">🟢 Easy (0.7×)</option>
+            <option value="medium" selected>🟡 Medium (1×)</option>
+            <option value="hard">🟠 Hard (1.4×)</option>
+            <option value="expert">🔴 Expert (2×)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Max Guesses Per Round</div><div class="sr-sub">How many tries players get (1–10)</div></div>
+          <input class="adm-input" id="cfg-maxguesses" type="number" min="1" max="10" value="5"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Hearts (lives)</div><div class="sr-sub">How many hearts the player starts with</div></div>
+          <input class="adm-input" id="cfg-hearts" type="number" min="1" max="10" value="5"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Allow Repeat Countries</div><div class="sr-sub">If off, each country appears at most once per session</div></div>
+          <div class="toggle" id="cfg-repeats" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Show Fun Facts After Round</div><div class="sr-sub">Capital, population, languages shown after result</div></div>
+          <div class="toggle on" id="cfg-facts" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Confetti on Correct</div><div class="sr-sub">🎉 Celebration animation on correct answers</div></div>
+          <div class="toggle on" id="cfg-confetti" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Show Proximity Hints</div><div class="sr-sub">Warm/cold toast messages after wrong guesses</div></div>
+          <div class="toggle on" id="cfg-proximity" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Show Compass Direction in Autocomplete</div><div class="sr-sub">Shows N/S/E/W direction when typing a guess</div></div>
+          <div class="toggle on" id="cfg-compass" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Show Flag Images</div><div class="sr-sub">Display real flag images throughout the game</div></div>
+          <div class="toggle on" id="cfg-flags" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Show Wrong Guess Panel</div><div class="sr-sub">Side panel showing previous wrong guesses this round</div></div>
+          <div class="toggle on" id="cfg-wrongpanel" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">⏱️</span> Timer</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Timer Enabled</div><div class="sr-sub">Countdown per round — timeout = heart lost</div></div>
+          <div class="toggle" id="cfg-timer" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Timer Duration (seconds)</div><div class="sr-sub">10–300 seconds per round</div></div>
+          <input class="adm-input" id="cfg-timer-secs" type="number" min="10" max="300" value="60"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Timer Warning Threshold</div><div class="sr-sub">Seconds remaining when bar turns red</div></div>
+          <input class="adm-input" id="cfg-timer-warn" type="number" min="5" max="60" value="15"/>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🤖</span> AI Opponent</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">AI Difficulty</div><div class="sr-sub">How accurately the AI guesses the target country</div></div>
+          <select class="adm-select" id="cfg-ai-diff">
+            <option value="easy">🟢 Easy AI — often wrong</option>
+            <option value="medium" selected>🟡 Medium AI — sometimes right</option>
+            <option value="hard">🟠 Hard AI — usually right</option>
+            <option value="unbeatable">🔴 Unbeatable — always correct</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">AI Thinking Delay</div><div class="sr-sub">How long before the AI makes its guess</div></div>
+          <select class="adm-select" id="cfg-ai-delay">
+            <option value="fast">⚡ Fast (0.5s)</option>
+            <option value="medium" selected>🕐 Medium (2.5s)</option>
+            <option value="slow">🐢 Slow (5s)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">AI Name</div><div class="sr-sub">What the AI opponent is called in-game</div></div>
+          <input class="adm-input wide" id="cfg-ai-name" type="text" value="🤖 AI" maxlength="15" style="text-align:left"/>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="saveSettings()" style="flex:1;padding:14px">✅ Save All Settings</button>
+        <button class="btn btn-secondary" onclick="resetToDefaults()">↺ Reset Defaults</button>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: LEADERBOARD ═══ -->
+    <div class="tab-content" id="tab-players">
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span><span class="card-title-icon">🏆</span> All-Time Leaderboard</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="refreshScores()">↻ Refresh</button>
+            <button class="btn btn-green btn-sm" onclick="exportCSV()">📊 Export CSV</button>
+          </div>
+        </div>
+        <div id="scores-table-wrap"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title green"><span class="card-title-icon">📊</span> Score Statistics</div>
+        <div class="grid2">
+          <div style="background:var(--surface2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">All-Time Best</div>
+            <div id="stat-best-val" style="font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--gold)">0</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Total Points Scored</div>
+            <div id="stat-total" style="font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--green)">0</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Average Score</div>
+            <div id="stat-avg" style="font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--cyan)">0</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Total Entries</div>
+            <div id="stat-entries" style="font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--purple)">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title red"><span class="card-title-icon">🗑️</span> Score Management</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Delete by Rank Number</div><div class="sr-sub">Enter the rank number (1 = top) to remove that entry</div></div>
+          <div style="display:flex;gap:8px">
+            <input class="adm-input" id="del-rank" type="number" min="1" value="1" style="width:70px"/>
+            <button class="btn btn-danger" onclick="deleteScore()">Delete</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Add a Score Entry</div><div class="sr-sub">Manually add a score to the leaderboard</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input class="adm-input wide" id="add-score-name" type="text" placeholder="Name" style="width:100px"/>
+            <input class="adm-input" id="add-score-val" type="number" min="0" value="1000" style="width:90px"/>
+            <button class="btn btn-green btn-sm" onclick="addScoreEntry()">Add</button>
+          </div>
+        </div>
+        <div id="score-mgmt-msg" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: PLAYER PROFILE ═══ -->
+    <div class="tab-content" id="tab-profile">
+      <div class="card">
+        <div class="card-title pink"><span class="card-title-icon">👤</span> Player Profile</div>
+        <div class="player-profile-box">
+          <div class="player-avatar" id="profile-avatar" onclick="toggleEmojiPicker()" title="Click to change avatar">🌍</div>
+          <div class="player-info">
+            <div class="player-name-big" id="profile-name-display">Loading...</div>
+            <div class="player-meta" id="profile-meta">—</div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Change Username</div><div class="sr-sub">The name shown on the leaderboard and in-game</div></div>
+          <div style="display:flex;gap:8px">
+            <input class="adm-input wide" id="profile-name-inp" type="text" maxlength="20" placeholder="Enter name..."/>
+            <button class="btn btn-pink btn-sm" onclick="saveProfileName()">Save</button>
+          </div>
+        </div>
+        <div id="profile-name-msg" style="margin-top:4px"></div>
+
+        <div style="margin-top:12px">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Choose Avatar Emoji</div>
+          <div class="emoji-picker" id="emoji-picker">
+            🌍 🌎 🌏 🗺️ 🧠 🎯 🏆 🥇 🌟 ⭐ 🦁 🐯 🦊 🐺 🦅 🐬 🦋 🌈 🎮 🕹️ 🧩 🎲 👑 💎 🔥 ⚡ 🌊 🏔️ 🌴 🎓
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title gold"><span class="card-title-icon">📈</span> Player Statistics</div>
+        <div class="grid2" id="profile-stats-grid">
+          <div style="background:var(--surface2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Games Played</div>
+            <div id="prof-played" style="font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:var(--green)">0</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Best Score</div>
+            <div id="prof-best" style="font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:var(--gold)">0</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Current Streak</div>
+            <div id="prof-streak" style="font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:var(--red)">0</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Coins Balance</div>
+            <div id="prof-coins" style="font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:var(--gold)">0</div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Score Ranking Progress</div>
+          <div id="prof-rank-label" style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">No scores yet</div>
+          <div class="progress-bar"><div class="progress-fill" id="prof-rank-fill" style="width:0%;background:var(--purple)"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🔧</span> Edit Player Data</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Set Coin Balance</div><div class="sr-sub">Directly set the player's coin balance</div></div>
+          <div style="display:flex;gap:8px">
+            <input class="adm-input" id="set-coins-val" type="number" min="0" value="100"/>
+            <button class="btn btn-gold btn-sm" onclick="setCoinsDirectly()">Set</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Set Streak</div><div class="sr-sub">Manually set the player's current streak count</div></div>
+          <div style="display:flex;gap:8px">
+            <input class="adm-input" id="set-streak-val" type="number" min="0" value="0"/>
+            <button class="btn btn-orange btn-sm" onclick="setStreakDirectly()">Set</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Set Games Played</div><div class="sr-sub">Override the games played counter</div></div>
+          <div style="display:flex;gap:8px">
+            <input class="adm-input" id="set-played-val" type="number" min="0" value="0"/>
+            <button class="btn btn-blue btn-sm" onclick="setPlayedDirectly()">Set</button>
+          </div>
+        </div>
+        <div id="profile-edit-msg" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: ECONOMY ═══ -->
+    <div class="tab-content" id="tab-economy">
+      <div class="card">
+        <div class="card-title gold"><span class="card-title-icon">💰</span> Coin Settings</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Starting Coins (new players)</div><div class="sr-sub">Coins given the first time someone plays</div></div>
+          <input class="adm-input" id="cfg-start-coins" type="number" min="0" max="9999" value="100"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Clue Unlock Cost</div><div class="sr-sub">Coins to unlock each extra hint clue</div></div>
+          <input class="adm-input" id="cfg-clue-cost" type="number" min="0" max="500" value="30"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Coins per Correct Guess (1st try)</div><div class="sr-sub">Bonus coins for getting it right first time</div></div>
+          <input class="adm-input" id="cfg-coins-1st" type="number" min="0" max="999" value="100"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Coins per Correct Guess (other)</div><div class="sr-sub">Coins for correct guess after first try</div></div>
+          <input class="adm-input" id="cfg-coins-other" type="number" min="0" max="999" value="30"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Game Completion Bonus</div><div class="sr-sub">Bonus coins for finishing a full game</div></div>
+          <input class="adm-input" id="cfg-coins-complete" type="number" min="0" max="999" value="20"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Streak Bonus Multiplier</div><div class="sr-sub">Coin multiplier per active streak level</div></div>
+          <select class="adm-select" id="cfg-streak-mult">
+            <option value="1.0">None (1×)</option>
+            <option value="1.1">Small (1.1×)</option>
+            <option value="1.25" selected>Medium (1.25×)</option>
+            <option value="1.5">Large (1.5×)</option>
+            <option value="2.0">Double (2×)</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title green"><span class="card-title-icon">🎁</span> Grant / Adjust Coins</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Add Coins to Player</div><div class="sr-sub">Instantly add coins to the player's balance</div></div>
+          <div style="display:flex;gap:8px">
+            <input class="adm-input" id="grant-coins-amt" type="number" min="1" max="99999" value="50"/>
+            <button class="btn btn-gold" onclick="grantCoins()">Grant 💰</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Remove Coins from Player</div><div class="sr-sub">Deduct coins from the player's balance</div></div>
+          <div style="display:flex;gap:8px">
+            <input class="adm-input" id="remove-coins-amt" type="number" min="1" max="99999" value="50"/>
+            <button class="btn btn-danger" onclick="removeCoins()">Remove</button>
+          </div>
+        </div>
+        <div id="grant-msg" style="margin-top:8px"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()" style="width:100%;padding:14px">✅ Save Economy Settings</button>
+    </div>
+
+    <!-- ═══ TAB: APPEARANCE ═══ -->
+    <div class="tab-content" id="tab-appearance">
+      <div class="card">
+        <div class="card-title cyan"><span class="card-title-icon">🎨</span> Map Style</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Choose the map tile style shown in-game</div>
+        <div class="map-style-grid" id="map-style-grid">
+          <div class="map-style-card sel" data-style="voyager" onclick="selectMapStyle(this)">
+            <div class="map-style-preview" style="background:linear-gradient(135deg,#dde8f0 0%,#c8ddb8 50%,#e8e0d0 100%)"></div>
+            <div class="map-style-name">Voyager</div>
+            <div class="map-style-sub">Default colour map</div>
+          </div>
+          <div class="map-style-card" data-style="light" onclick="selectMapStyle(this)">
+            <div class="map-style-preview" style="background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 50%,#dee2e6 100%)"></div>
+            <div class="map-style-name">Light</div>
+            <div class="map-style-sub">Clean minimal</div>
+          </div>
+          <div class="map-style-card" data-style="dark" onclick="selectMapStyle(this)">
+            <div class="map-style-preview" style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)"></div>
+            <div class="map-style-name">Dark</div>
+            <div class="map-style-sub">Night mode</div>
+          </div>
+          <div class="map-style-card" data-style="satellite" onclick="selectMapStyle(this)">
+            <div class="map-style-preview" style="background:linear-gradient(135deg,#2d5016 0%,#1a3a0a 30%,#0d6efd22 60%,#1565c0 100%)"></div>
+            <div class="map-style-name">Satellite</div>
+            <div class="map-style-sub">Imagery style</div>
+          </div>
+          <div class="map-style-card" data-style="topo" onclick="selectMapStyle(this)">
+            <div class="map-style-preview" style="background:linear-gradient(135deg,#8db87a 0%,#c9b99a 40%,#a8c5a0 70%,#d4c5a9 100%)"></div>
+            <div class="map-style-name">Topo</div>
+            <div class="map-style-sub">Terrain lines</div>
+          </div>
+          <div class="map-style-card" data-style="watercolour" onclick="selectMapStyle(this)">
+            <div class="map-style-preview" style="background:linear-gradient(135deg,#e8f4f8 0%,#b8dce8 30%,#f0e6d0 60%,#d4b89a 100%)"></div>
+            <div class="map-style-name">Watercolour</div>
+            <div class="map-style-sub">Artistic style</div>
+          </div>
+        </div>
+        <div id="map-style-msg" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title cyan"><span class="card-title-icon">🌈</span> Accent Colour</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Change the primary green accent colour in-game</div>
+        <div class="color-grid" id="color-grid">
+          <div class="color-swatch sel" data-color="#639922" style="background:#639922" onclick="selectColor(this)" title="Default Green"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#0ea5e9" style="background:#0ea5e9" onclick="selectColor(this)" title="Sky Blue"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#8b5cf6" style="background:#8b5cf6" onclick="selectColor(this)" title="Purple"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#f59e0b" style="background:#f59e0b" onclick="selectColor(this)" title="Gold"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#ef4444" style="background:#ef4444" onclick="selectColor(this)" title="Red"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#ec4899" style="background:#ec4899" onclick="selectColor(this)" title="Pink"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#06b6d4" style="background:#06b6d4" onclick="selectColor(this)" title="Cyan"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#f97316" style="background:#f97316" onclick="selectColor(this)" title="Orange"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#10b981" style="background:#10b981" onclick="selectColor(this)" title="Emerald"><span class="ck">✓</span></div>
+          <div class="color-swatch" data-color="#1a1a1a" style="background:#555" onclick="selectColor(this)" title="Mono"><span class="ck" style="color:#fff">✓</span></div>
+        </div>
+        <div id="color-msg" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title cyan"><span class="card-title-icon">✏️</span> Branding</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Game Title</div><div class="sr-sub">The name shown on the main menu and loader</div></div>
+          <input class="adm-input wide" id="cfg-game-title" type="text" value="GeoBrain" maxlength="20" style="text-align:left"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Tagline</div><div class="sr-sub">The subtitle shown under the logo</div></div>
+          <input class="adm-input" id="cfg-tagline" type="text" value="🌍 Geography Game By Kai" maxlength="40" style="width:220px;text-align:left;font-size:12px;letter-spacing:0;font-family:'Nunito',sans-serif"/>
+        </div>
+        <div id="branding-msg" style="margin-top:8px"></div>
+        <button class="btn btn-cyan btn-sm" onclick="saveBranding()" style="margin-top:12px">Save Branding</button>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveSettings()" style="width:100%;padding:14px">✅ Save Appearance Settings</button>
+    </div>
+
+    <!-- ═══ TAB: REGIONS ═══ -->
+    <div class="tab-content" id="tab-regions">
+      <div class="card">
+        <div class="card-title green"><span class="card-title-icon">🗺️</span> Active Regions</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:700">Toggle which world regions appear in the game. Deselecting all = all regions enabled.</div>
+        <div class="region-grid" id="region-grid">
+          <div class="region-pill on" data-region="Africa" onclick="toggleRegion(this)">🌍 Africa</div>
+          <div class="region-pill on" data-region="Americas" onclick="toggleRegion(this)">🌎 Americas</div>
+          <div class="region-pill on" data-region="Asia" onclick="toggleRegion(this)">🌏 Asia</div>
+          <div class="region-pill on" data-region="Europe" onclick="toggleRegion(this)">🏰 Europe</div>
+          <div class="region-pill on" data-region="Oceania" onclick="toggleRegion(this)">🏝️ Oceania</div>
+          <div class="region-pill on" data-region="Antarctic" onclick="toggleRegion(this)">🧊 Antarctic</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-secondary btn-sm" onclick="selectAllRegions()">Select All</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearAllRegions()">Clear All</button>
+        </div>
+        <div id="region-msg" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title green"><span class="card-title-icon">🔎</span> Country Pool</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:700">Control which types of countries appear</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Include Small Nations</div><div class="sr-sub">Monaco, San Marino, Liechtenstein, Vatican etc.</div></div>
+          <div class="toggle on" id="cfg-small-nations" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Include Island Nations</div><div class="sr-sub">Small Pacific and Caribbean islands</div></div>
+          <div class="toggle on" id="cfg-island-nations" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Include Territories</div><div class="sr-sub">Dependent territories and overseas regions</div></div>
+          <div class="toggle" id="cfg-territories" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Min Population Filter</div><div class="sr-sub">Only show countries with at least this many people (0 = no filter)</div></div>
+          <input class="adm-input" id="cfg-min-pop" type="number" min="0" max="50000000" value="0" style="width:110px"/>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()" style="width:100%;padding:14px">✅ Save Region Settings</button>
+    </div>
+
+    <!-- ═══ TAB: ACHIEVEMENTS ═══ -->
+    <div class="tab-content" id="tab-achievements">
+      <div class="card">
+        <div class="card-title gold"><span class="card-title-icon">🏅</span> Player Achievements</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:700">Achievements automatically unlock as the player progresses.</div>
+        <div class="ach-grid" id="ach-grid">
+          <!-- filled by JS -->
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title gold"><span class="card-title-icon">🔧</span> Manage Achievements</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Achievements Enabled</div><div class="sr-sub">Show achievement notifications and track progress</div></div>
+          <div class="toggle on" id="cfg-achievements" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-gold btn-sm" onclick="unlockAllAchievements()">🔓 Unlock All</button>
+          <button class="btn btn-danger btn-sm" onclick="resetAchievements()">🗑️ Reset All</button>
+        </div>
+        <div id="ach-msg" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: ANNOUNCEMENTS ═══ -->
+    <div class="tab-content" id="tab-announce">
+      <div class="card">
+        <div class="card-title blue"><span class="card-title-icon">📢</span> In-Game Announcement Banner</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:700">Show a message banner at the top of the main menu screen.</div>
+
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Banner Enabled</div><div class="sr-sub">Show the announcement banner on the menu</div></div>
+          <div class="toggle" id="cfg-ann-enabled" onclick="this.classList.toggle('on');updateAnnPreview()"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Message Text</div><div class="sr-sub">The announcement message to display</div></div>
+          <input class="adm-input" id="cfg-ann-text" type="text" placeholder="e.g. New game mode coming soon!" style="width:260px;text-align:left;font-size:12px;letter-spacing:0;font-family:'Nunito',sans-serif" oninput="updateAnnPreview()"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Banner Style</div><div class="sr-sub">Colour style of the announcement</div></div>
+          <select class="adm-select" id="cfg-ann-style" onchange="updateAnnPreview()">
+            <option value="info">🔵 Info (Blue)</option>
+            <option value="success">🟢 Success (Green)</option>
+            <option value="warning">🟡 Warning (Gold)</option>
+            <option value="danger">🔴 Alert (Red)</option>
+            <option value="purple">🟣 Event (Purple)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Banner Icon</div><div class="sr-sub">Emoji icon shown before the message</div></div>
+          <input class="adm-input" id="cfg-ann-icon" type="text" value="📢" maxlength="4" style="width:60px" oninput="updateAnnPreview()"/>
+        </div>
+
+        <div class="ann-preview">
+          <div class="ann-preview-label">Preview</div>
+          <div class="ann-banner" id="ann-preview-banner" style="background:#1e3a5f;color:#60a5fa;border:1.5px solid #3b82f6">
+            <span id="ann-preview-icon">📢</span>
+            <span id="ann-preview-text">Your announcement here</span>
+          </div>
+        </div>
+
+        <button class="btn btn-blue" onclick="saveAnnouncement()" style="margin-top:16px;width:100%;padding:14px">📢 Save Announcement</button>
+        <div id="ann-msg" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title blue"><span class="card-title-icon">📅</span> Scheduled Messages</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:700">Quick-set announcement templates</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="setTemplate('🎉 New update released! Enjoy the new features!','success')">🎉 New Update</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTemplate('🔧 Maintenance scheduled — some features may be slow.','warning')">🔧 Maintenance</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTemplate('🏆 Weekly challenge is live! Play now!','purple')">🏆 Weekly Challenge</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTemplate('🌟 Check out the Daily Challenge!','info')">🌟 Daily Reminder</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTemplate('⚠️ Server issues — online mode may be unavailable.','danger')">⚠️ Server Issues</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTemplate('👋 Welcome to GeoBrain — enjoy the game!','success')">👋 Welcome</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: PRESETS ═══ -->
+    <div class="tab-content" id="tab-presets">
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🎯</span> Quick Game Presets</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:700">Apply a preset to instantly configure the game for a specific experience.</div>
+        <div class="preset-grid">
+          <div class="preset-card" onclick="applyPreset('casual')">
+            <div class="preset-icon">😊</div>
+            <div class="preset-name">CASUAL</div>
+            <div class="preset-desc">Easy mode, 10 rounds, 90s timer, lots of hints</div>
+          </div>
+          <div class="preset-card" onclick="applyPreset('classic')">
+            <div class="preset-icon">🎮</div>
+            <div class="preset-name">CLASSIC</div>
+            <div class="preset-desc">Medium, 10 rounds, no timer, balanced economy</div>
+          </div>
+          <div class="preset-card" onclick="applyPreset('speed')">
+            <div class="preset-icon">⚡</div>
+            <div class="preset-name">SPEED RUN</div>
+            <div class="preset-desc">Hard, 15 rounds, 20s timer, max pressure</div>
+          </div>
+          <div class="preset-card" onclick="applyPreset('expert')">
+            <div class="preset-icon">🧠</div>
+            <div class="preset-name">EXPERT</div>
+            <div class="preset-desc">Expert difficulty, 20 rounds, 45s timer, no repeats</div>
+          </div>
+          <div class="preset-card" onclick="applyPreset('kids')">
+            <div class="preset-icon">🌈</div>
+            <div class="preset-name">KIDS</div>
+            <div class="preset-desc">Easy, 5 rounds, no timer, big coin rewards</div>
+          </div>
+          <div class="preset-card" onclick="applyPreset('marathon')">
+            <div class="preset-icon">🏃</div>
+            <div class="preset-name">MARATHON</div>
+            <div class="preset-desc">Medium, 30 rounds, no timer, all countries</div>
+          </div>
+          <div class="preset-card" onclick="applyPreset('party')">
+            <div class="preset-icon">🎉</div>
+            <div class="preset-name">PARTY</div>
+            <div class="preset-desc">Easy, 8 rounds, confetti on, maximum fun</div>
+          </div>
+          <div class="preset-card" onclick="applyPreset('streamer')">
+            <div class="preset-icon">🎥</div>
+            <div class="preset-name">STREAMER</div>
+            <div class="preset-desc">Hard, 15 rounds, 30s timer — exciting to watch</div>
+          </div>
+        </div>
+        <div id="preset-msg" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">💾</span> Save / Load Custom Preset</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Save Current Settings as Preset</div><div class="sr-sub">Snapshot all current settings for quick reuse</div></div>
+          <div style="display:flex;gap:8px">
+            <input class="adm-input wide" id="custom-preset-name" type="text" placeholder="My Preset" style="width:140px"/>
+            <button class="btn btn-green btn-sm" onclick="saveCustomPreset()">💾 Save</button>
+          </div>
+        </div>
+        <div id="custom-preset-wrap" style="margin-top:12px">
+          <!-- loaded from localStorage -->
+        </div>
+        <div id="custom-preset-msg" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: DAILY CHALLENGE ═══ -->
+    <div class="tab-content" id="tab-daily">
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🌟</span> Daily Challenge Info</div>
+        <div id="daily-info" style="padding:4px 0">Loading...</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📅</span> Override Today's Country</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Force Daily Country</div><div class="sr-sub">Override the auto-selected country. Leave blank for default seed.</div></div>
+          <input class="adm-input wide" id="daily-override" type="text" placeholder="e.g. France" style="text-align:left;letter-spacing:0;font-size:12px;font-family:'Nunito',sans-serif;width:160px"/>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveDailyOverride()">💾 Set Override</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearDailyOverride()">✕ Clear Override</button>
+          <button class="btn btn-danger btn-sm" onclick="resetTodayResult()">🗑️ Reset Today's Completion</button>
+        </div>
+        <div id="daily-override-msg" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📈</span> Daily History (Last 30 Days)</div>
+        <div id="daily-history">
+          <p style="color:var(--muted);font-size:13px">No daily history stored yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: ACTIVITY LOG ═══ -->
+    <div class="tab-content" id="tab-activity">
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📋</span> Activity Log</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="loadActivity()">↻ Refresh</button>
+          <button class="btn btn-danger btn-sm" onclick="clearActivityLog()">🗑️ Clear Log</button>
+        </div>
+        <div id="activity-list">
+          <p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No activity logged yet.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📊</span> Storage Info</div>
+        <div class="setting-row">
+          <div class="sr-label">Admin Panel Version</div>
+          <span style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)">v3.0</span>
+        </div>
+        <div class="setting-row">
+          <div class="sr-label">GeoBrain Storage Used</div>
+          <span id="storage-used" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)">—</span>
+        </div>
+        <div class="setting-row">
+          <div class="sr-label">Total localStorage Keys</div>
+          <span id="storage-keys" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)">—</span>
+        </div>
+        <div class="setting-row">
+          <div class="sr-label">Last Settings Save</div>
+          <span id="last-save" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)">Never</span>
+        </div>
+        <div class="setting-row">
+          <div class="sr-label">Username Stored</div>
+          <span id="stored-username" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--green)">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: SECURITY ═══ -->
+    <div class="tab-content" id="tab-security">
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🔑</span> Change Admin Password</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Current Password</div></div>
+          <input class="adm-pw-input" id="sec-current" type="password" placeholder="Current password"/>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">New Password</div><div class="sr-sub">Minimum 4 characters</div></div>
+          <div>
+            <input class="adm-pw-input" id="sec-new" type="password" placeholder="New password" oninput="checkPwStrength()"/>
+            <div class="pw-strength" id="pw-strength-bar"></div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Confirm New Password</div></div>
+          <input class="adm-pw-input" id="sec-confirm" type="password" placeholder="Confirm new"/>
+        </div>
+        <div id="pw-change-msg" style="margin:12px 0"></div>
+        <button class="btn btn-primary" onclick="changePassword()" style="width:100%;padding:14px;margin-top:8px">🔒 Update Password</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🛡️</span> Session Settings</div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Auto-logout on tab close</div><div class="sr-sub">Require password again when reopening the admin panel</div></div>
+          <div class="toggle on" id="cfg-session-lock" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="sr-left"><div class="sr-label">Show password hint on login</div><div class="sr-sub">Display the default password hint for first-time setup</div></div>
+          <div class="toggle on" id="cfg-pw-hint" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-secondary btn-sm" onclick="exportAllData()">📦 Export All Data (JSON)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: DANGER ZONE ═══ -->
+    <div class="tab-content" id="tab-danger">
+      <div class="card">
+        <div class="card-title" style="color:var(--red)"><span class="card-title-icon">⚠️</span> Danger Zone</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;font-weight:700">These actions cannot be undone. Think carefully before proceeding.</p>
+
+        <div class="danger-zone">
+          <div class="danger-title">🗑️ Data Reset Actions</div>
+          <div class="danger-row">
+            <div><div class="danger-label">Reset All Leaderboard Scores</div><div class="danger-sub">Wipes every score entry from the board</div></div>
+            <button class="btn btn-danger btn-sm" onclick="dangerResetScores()">Reset Scores</button>
+          </div>
+          <div class="danger-row">
+            <div><div class="danger-label">Reset Player Stats</div><div class="danger-sub">Clears games played, streak, and best score</div></div>
+            <button class="btn btn-danger btn-sm" onclick="dangerResetStats()">Reset Stats</button>
+          </div>
+          <div class="danger-row">
+            <div><div class="danger-label">Reset Coin Balance to 0</div><div class="danger-sub">Sets player's coins to zero immediately</div></div>
+            <button class="btn btn-danger btn-sm" onclick="dangerResetCoins()">Reset Coins</button>
+          </div>
+          <div class="danger-row">
+            <div><div class="danger-label">Reset Daily Progress</div><div class="danger-sub">Allows today's daily challenge to be replayed</div></div>
+            <button class="btn btn-danger btn-sm" onclick="dangerResetDaily()">Reset Daily</button>
+          </div>
+          <div class="danger-row">
+            <div><div class="danger-label">Clear All Achievements</div><div class="danger-sub">Removes all unlocked achievements</div></div>
+            <button class="btn btn-danger btn-sm" onclick="resetAchievements()">Clear Achievements</button>
+          </div>
+          <div class="danger-row">
+            <div><div class="danger-label">Reset Username</div><div class="danger-sub">Clears the saved player username — prompts again next load</div></div>
+            <button class="btn btn-danger btn-sm" onclick="dangerResetUsername()">Clear Username</button>
+          </div>
+          <div class="danger-row">
+            <div><div class="danger-label">Reset All Game Settings</div><div class="danger-sub">Resets all admin settings to factory defaults</div></div>
+            <button class="btn btn-danger btn-sm" onclick="resetToDefaults()">Reset Settings</button>
+          </div>
+        </div>
+
+        <div class="danger-zone" style="border-color:rgba(239,68,68,0.6);background:rgba(239,68,68,0.08);margin-top:12px">
+          <div class="danger-title" style="font-size:12px">💥 NUCLEAR OPTION</div>
+          <div class="danger-row">
+            <div>
+              <div class="danger-label" style="color:var(--red);font-size:15px">DELETE ALL DATA</div>
+              <div class="danger-sub">Permanently removes every single GeoBrain key from localStorage. Irreversible.</div>
+            </div>
+            <button class="btn btn-danger" onclick="dangerNuke()">☢️ NUKE EVERYTHING</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /panel -->
+
+<div id="save-banner">✅ Settings saved!</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// KEYS & DEFAULTS
+// ══════════════════════════════════════════════════════
+const ADMIN_PW_KEY     = 'gb_admin_pw';
+const SESSION_KEY      = 'gb_admin_session';
+const SETTINGS_KEY     = 'gb_adm';
+const SCORES_KEY       = 'gb_scores';
+const STATS_KEY        = 'gb_stats';
+const COINS_KEY        = 'gb_coins';
+const DAILY_OVERRIDE   = 'gb_daily_override';
+const LAST_SAVE_KEY    = 'gb_admin_last_save';
+const ACH_KEY          = 'gb_achievements';
+const ACTIVITY_KEY     = 'gb_activity_log';
+const ANN_KEY          = 'gb_announcement';
+const BRANDING_KEY     = 'gb_branding';
+const MAP_STYLE_KEY    = 'gb_map_style';
+const ACCENT_KEY       = 'gb_accent_color';
+const USERNAME_KEY     = 'gb_username';
+const CUSTOM_PRESET_KEY= 'gb_custom_preset';
+
+const DEFAULTS = {
+  rounds:10, timer:false, timerSecs:60, timerWarn:15, diff:'medium',
+  facts:true, confetti:true, aiDiff:'medium', clueCost:30, aiDelay:'medium',
+  maxGuesses:5, hearts:5, proximity:true, repeats:false,
+  startCoins:100, coins1st:100, coinsOther:30, coinsComplete:20, streakMult:'1.25',
+  compass:true, flags:true, wrongPanel:true, achievements:true,
+  regions:['Africa','Americas','Asia','Europe','Oceania'],
+  smallNations:true, islandNations:true, territories:false, minPop:0,
+  aiName:'🤖 AI'
+};
+
+const ACHIEVEMENTS_DEF = [
+  {id:'first_game',  icon:'🎮', name:'First Steps',   desc:'Play your first game',            req:()=>getStats().played>=1},
+  {id:'ten_games',   icon:'🔟', name:'Committed',     desc:'Play 10 games',                   req:()=>getStats().played>=10},
+  {id:'fifty_games', icon:'🏃', name:'Grinder',       desc:'Play 50 games',                   req:()=>getStats().played>=50},
+  {id:'streak3',     icon:'🔥', name:'On Fire',       desc:'Reach a 3-game streak',           req:()=>getStats().streak>=3},
+  {id:'streak7',     icon:'💥', name:'Unstoppable',   desc:'Reach a 7-game streak',           req:()=>getStats().streak>=7},
+  {id:'score1000',   icon:'⭐', name:'Star Student',  desc:'Score over 1,000 points',         req:()=>getStats().best>=1000},
+  {id:'score5000',   icon:'🌟', name:'Geo Expert',    desc:'Score over 5,000 points',         req:()=>getStats().best>=5000},
+  {id:'score10000',  icon:'🏆', name:'World Master',  desc:'Score over 10,000 points',        req:()=>getStats().best>=10000},
+  {id:'coins500',    icon:'💰', name:'Coin Collector',desc:'Accumulate 500 coins',            req:()=>getCoins()>=500},
+  {id:'coins1000',   icon:'💎', name:'Coin Hoarder',  desc:'Accumulate 1,000 coins',          req:()=>getCoins()>=1000},
+  {id:'daily1',      icon:'📅', name:'Daily Habit',   desc:'Complete the daily challenge',    req:()=>hasDoneDaily()},
+  {id:'globe',       icon:'🌍', name:'Globetrotter',  desc:'Play at least one game in every mode', req:()=>false},
+];
+
+const MAP_TILES = {
+  voyager:    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  light:      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark:       'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  satellite:  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  topo:       'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+  watercolour:'https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg'
+};
+
+// ══════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════
+function getAdminPw(){ return localStorage.getItem(ADMIN_PW_KEY) || 'admin12' }
+function getSession(){ return sessionStorage.getItem(SESSION_KEY) === '1' }
+function setSession(){ sessionStorage.setItem(SESSION_KEY,'1') }
+function clearSession(){ sessionStorage.removeItem(SESSION_KEY) }
+
+function doLogin(){
+  const pw = document.getElementById('login-pw').value;
+  if(pw === getAdminPw()){
+    setSession();
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('panel').classList.add('active');
+    initPanel();
+    logActivity('🔐 Admin logged in','purple');
+  } else {
+    document.getElementById('login-err').textContent = '❌ Wrong password';
+    const inp = document.getElementById('login-pw');
+    inp.value = '';
+    inp.classList.add('shake');
+    setTimeout(()=>inp.classList.remove('shake'),400);
+  }
+}
+document.getElementById('login-pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin() });
+
+function doLogout(){
+  clearSession();
+  document.getElementById('panel').classList.remove('active');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('login-pw').value='';
+  document.getElementById('login-err').textContent='';
+}
+
+function openGame(){ window.open('GeoBrain7.html','_blank') }
+
+if(getSession()){
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('panel').classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════
+// DATA HELPERS
+// ══════════════════════════════════════════════════════
+function getSettings(){ try{ return Object.assign({},DEFAULTS,JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')) }catch{ return{...DEFAULTS} } }
+function getScores(){   try{ return JSON.parse(localStorage.getItem(SCORES_KEY)||'[]') }catch{ return[] } }
+function getStats(){    try{ return JSON.parse(localStorage.getItem(STATS_KEY)||'{}') }catch{ return{} } }
+function getCoins(){    return parseInt(localStorage.getItem(COINS_KEY)||'0')||0 }
+function getUsername(){ return localStorage.getItem(USERNAME_KEY)||'' }
+function hasDoneDaily(){
+  const d=new Date();
+  return !!localStorage.getItem(`gb_daily_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`);
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+function initPanel(){
+  loadSettingsIntoUI();
+  refreshTopStats();
+  refreshScores();
+  loadDailyInfo();
+  loadActivityUI();
+  loadStorageInfo();
+  loadProfileTab();
+  renderAchievements();
+  loadCustomPresets();
+  loadAnnouncement();
+  loadBranding();
+  loadRegions();
+  loadMapStyle();
+  loadAccentColor();
+}
+
+function refreshTopStats(){
+  const stats = getStats();
+  const coins = getCoins();
+  document.getElementById('st-played').textContent  = stats.played||0;
+  document.getElementById('st-coins').textContent   = coins;
+  document.getElementById('st-streak').textContent  = stats.streak||0;
+  document.getElementById('st-best').textContent    = (stats.best||0).toLocaleString();
+}
+
+// ══════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════
+function switchTab(id, el){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('on'));
+  if(el) el.classList.add('on');
+  document.getElementById('tab-'+id).classList.add('on');
+  if(id==='players')    { refreshScores(); refreshTopStats(); }
+  if(id==='daily')      loadDailyInfo();
+  if(id==='activity')   { loadActivityUI(); loadStorageInfo(); }
+  if(id==='achievements') renderAchievements();
+  if(id==='profile')    loadProfileTab();
+  if(id==='presets')    loadCustomPresets();
+}
+
+// ══════════════════════════════════════════════════════
+// LOAD SETTINGS INTO UI
+// ══════════════════════════════════════════════════════
+function loadSettingsIntoUI(){
+  const s = getSettings();
+  document.getElementById('cfg-rounds').value       = s.rounds;
+  document.getElementById('cfg-diff').value         = s.diff;
+  document.getElementById('cfg-maxguesses').value   = s.maxGuesses||5;
+  document.getElementById('cfg-hearts').value       = s.hearts||5;
+  document.getElementById('cfg-timer').classList.toggle('on', s.timer);
+  document.getElementById('cfg-timer-secs').value   = s.timerSecs;
+  document.getElementById('cfg-timer-warn').value   = s.timerWarn||15;
+  document.getElementById('cfg-clue-cost').value    = s.clueCost;
+  document.getElementById('cfg-start-coins').value  = s.startCoins||100;
+  document.getElementById('cfg-coins-1st').value    = s.coins1st||100;
+  document.getElementById('cfg-coins-other').value  = s.coinsOther||30;
+  document.getElementById('cfg-coins-complete').value = s.coinsComplete||20;
+  document.getElementById('cfg-streak-mult').value  = s.streakMult||'1.25';
+  document.getElementById('cfg-facts').classList.toggle('on',  s.facts);
+  document.getElementById('cfg-confetti').classList.toggle('on', s.confetti);
+  document.getElementById('cfg-ai-diff').value      = s.aiDiff;
+  document.getElementById('cfg-ai-delay').value     = s.aiDelay||'medium';
+  document.getElementById('cfg-ai-name').value      = s.aiName||'🤖 AI';
+  document.getElementById('cfg-proximity').classList.toggle('on', s.proximity!==false);
+  document.getElementById('cfg-repeats').classList.toggle('on',   s.repeats===true);
+  document.getElementById('cfg-compass').classList.toggle('on',   s.compass!==false);
+  document.getElementById('cfg-flags').classList.toggle('on',     s.flags!==false);
+  document.getElementById('cfg-wrongpanel').classList.toggle('on',s.wrongPanel!==false);
+  document.getElementById('cfg-achievements').classList.toggle('on', s.achievements!==false);
+  document.getElementById('cfg-small-nations').classList.toggle('on', s.smallNations!==false);
+  document.getElementById('cfg-island-nations').classList.toggle('on', s.islandNations!==false);
+  document.getElementById('cfg-territories').classList.toggle('on', s.territories===true);
+  document.getElementById('cfg-min-pop').value = s.minPop||0;
+}
+
+// ══════════════════════════════════════════════════════
+// SAVE SETTINGS
+// ══════════════════════════════════════════════════════
+function saveSettings(){
+  const s = {
+    rounds:       parseInt(document.getElementById('cfg-rounds').value)||10,
+    diff:         document.getElementById('cfg-diff').value,
+    maxGuesses:   parseInt(document.getElementById('cfg-maxguesses').value)||5,
+    hearts:       parseInt(document.getElementById('cfg-hearts').value)||5,
+    timer:        document.getElementById('cfg-timer').classList.contains('on'),
+    timerSecs:    parseInt(document.getElementById('cfg-timer-secs').value)||60,
+    timerWarn:    parseInt(document.getElementById('cfg-timer-warn').value)||15,
+    clueCost:     parseInt(document.getElementById('cfg-clue-cost').value)||30,
+    startCoins:   parseInt(document.getElementById('cfg-start-coins').value)||100,
+    coins1st:     parseInt(document.getElementById('cfg-coins-1st').value)||100,
+    coinsOther:   parseInt(document.getElementById('cfg-coins-other').value)||30,
+    coinsComplete:parseInt(document.getElementById('cfg-coins-complete').value)||20,
+    streakMult:   document.getElementById('cfg-streak-mult').value,
+    facts:        document.getElementById('cfg-facts').classList.contains('on'),
+    confetti:     document.getElementById('cfg-confetti').classList.contains('on'),
+    aiDiff:       document.getElementById('cfg-ai-diff').value,
+    aiDelay:      document.getElementById('cfg-ai-delay').value,
+    aiName:       document.getElementById('cfg-ai-name').value||'🤖 AI',
+    proximity:    document.getElementById('cfg-proximity').classList.contains('on'),
+    repeats:      document.getElementById('cfg-repeats').classList.contains('on'),
+    compass:      document.getElementById('cfg-compass').classList.contains('on'),
+    flags:        document.getElementById('cfg-flags').classList.contains('on'),
+    wrongPanel:   document.getElementById('cfg-wrongpanel').classList.contains('on'),
+    achievements: document.getElementById('cfg-achievements').classList.contains('on'),
+    smallNations: document.getElementById('cfg-small-nations').classList.contains('on'),
+    islandNations:document.getElementById('cfg-island-nations').classList.contains('on'),
+    territories:  document.getElementById('cfg-territories').classList.contains('on'),
+    minPop:       parseInt(document.getElementById('cfg-min-pop').value)||0,
+    regions:      getActiveRegions(),
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  localStorage.setItem(LAST_SAVE_KEY, new Date().toLocaleString());
+  logActivity(`⚙️ Settings saved (${s.diff} difficulty, ${s.rounds} rounds)`,'green');
+  showSaveBanner();
+}
+
+function resetToDefaults(){
+  if(!confirm('Reset all settings to default values?')) return;
+  localStorage.removeItem(SETTINGS_KEY);
+  loadSettingsIntoUI();
+  logActivity('↺ Settings reset to defaults','gold');
+  showSaveBanner();
+}
+
+function showSaveBanner(){
+  const b = document.getElementById('save-banner');
+  b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),2500);
+  refreshTopStats();
+}
+
+// ══════════════════════════════════════════════════════
+// SCORES
+// ══════════════════════════════════════════════════════
+function refreshScores(){
+  const scores = getScores();
+  const wrap = document.getElementById('scores-table-wrap');
+  if(!scores.length){
+    wrap.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;font-size:13px;font-weight:700">No scores yet — go play some games!</p>';
+    ['stat-best-val','stat-total','stat-avg','stat-entries'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='0'; });
+    return;
+  }
+  const best  = scores[0]?.score||0;
+  const total = scores.reduce((a,b)=>a+(b.score||0),0);
+  const avg   = Math.round(total/scores.length);
+  document.getElementById('stat-best-val').textContent  = best.toLocaleString();
+  document.getElementById('stat-total').textContent     = total.toLocaleString();
+  document.getElementById('stat-avg').textContent       = avg.toLocaleString();
+  document.getElementById('stat-entries').textContent   = scores.length;
+
+  const rows = scores.slice(0,25).map((s,i)=>{
+    const medal = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    const label = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+    return `<tr><td><span class="rank-badge ${medal}">${label}</span></td><td style="font-weight:800">${escHtml(s.name||'?')}</td><td><span class="score-val">${(s.score||0).toLocaleString()}</span></td><td><span class="score-date">${escHtml(s.date||'')}</span></td></tr>`;
+  }).join('');
+  wrap.innerHTML = `<table class="score-table"><thead><tr><th>Rank</th><th>Name</th><th>Score</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function deleteScore(){
+  const rank = parseInt(document.getElementById('del-rank').value)-1;
+  const scores = getScores();
+  if(rank<0||rank>=scores.length){ setMsg('score-mgmt-msg','err','Invalid rank'); return; }
+  const removed = scores[rank];
+  if(!confirm(`Delete #${rank+1}: ${removed.name} (${removed.score})?`)) return;
+  scores.splice(rank,1);
+  localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
+  refreshScores();
+  logActivity(`🗑️ Deleted score: ${removed.name} — ${removed.score}`,'red');
+  setMsg('score-mgmt-msg','ok',`✅ Deleted ${removed.name}'s score`);
+}
+
+function addScoreEntry(){
+  const name = document.getElementById('add-score-name').value.trim();
+  const val  = parseInt(document.getElementById('add-score-val').value)||0;
+  if(!name){ setMsg('score-mgmt-msg','err','Enter a name'); return; }
+  const scores = getScores();
+  scores.push({name, score:val, date:new Date().toLocaleDateString()});
+  scores.sort((a,b)=>b.score-a.score);
+  if(scores.length>25) scores.length=25;
+  localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
+  refreshScores();
+  logActivity(`➕ Added score: ${name} — ${val}`,'green');
+  setMsg('score-mgmt-msg','ok',`✅ Added ${name} with ${val} pts`);
+}
+
+function exportCSV(){
+  const scores = getScores();
+  if(!scores.length){ alert('No scores to export!'); return; }
+  const csv = 'Rank,Name,Score,Date\n'+scores.map((s,i)=>`${i+1},${s.name},${s.score},${s.date}`).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv,'+encodeURIComponent(csv);
+  a.download = 'geobrain_scores.csv';
+  a.click();
+  logActivity('📊 Exported scores CSV','blue');
+}
+
+// ══════════════════════════════════════════════════════
+// ECONOMY
+// ══════════════════════════════════════════════════════
+function grantCoins(){
+  const amt = parseInt(document.getElementById('grant-coins-amt').value)||0;
+  if(amt<=0||amt>99999){ setMsg('grant-msg','err','Enter a valid amount (1–99999)'); return; }
+  const cur = getCoins();
+  localStorage.setItem(COINS_KEY, cur+amt);
+  refreshTopStats();
+  logActivity(`💰 Granted ${amt} coins (total: ${cur+amt})`,'gold');
+  setMsg('grant-msg','ok',`✅ Granted ${amt} coins! New total: ${cur+amt}`);
+}
+
+function removeCoins(){
+  const amt = parseInt(document.getElementById('remove-coins-amt').value)||0;
+  if(amt<=0){ setMsg('grant-msg','err','Enter a valid amount'); return; }
+  const cur = getCoins();
+  const newVal = Math.max(0, cur-amt);
+  localStorage.setItem(COINS_KEY, newVal);
+  refreshTopStats();
+  logActivity(`💸 Removed ${amt} coins (total: ${newVal})`,'red');
+  setMsg('grant-msg','ok',`✅ Removed ${amt} coins. New total: ${newVal}`);
+}
+
+// ══════════════════════════════════════════════════════
+// PLAYER PROFILE TAB
+// ══════════════════════════════════════════════════════
+function loadProfileTab(){
+  const un = getUsername();
+  const stats = getStats();
+  const coins = getCoins();
+  const saved = JSON.parse(localStorage.getItem('gb_profile')||'{}');
+
+  document.getElementById('profile-name-display').textContent = un || 'No username set';
+  document.getElementById('profile-name-inp').value = un;
+  document.getElementById('profile-avatar').textContent = saved.avatar || '🌍';
+
+  const scores = getScores();
+  const rank = scores.findIndex(s=>s.name===un)+1;
+  document.getElementById('profile-meta').textContent = rank>0 ? `#${rank} on leaderboard • ${scores.length} total entries` : `Not on leaderboard yet`;
+
+  document.getElementById('prof-played').textContent  = stats.played||0;
+  document.getElementById('prof-best').textContent    = (stats.best||0).toLocaleString();
+  document.getElementById('prof-streak').textContent  = stats.streak||0;
+  document.getElementById('prof-coins').textContent   = coins;
+
+  // Pre-fill edit fields
+  document.getElementById('set-coins-val').value   = coins;
+  document.getElementById('set-streak-val').value  = stats.streak||0;
+  document.getElementById('set-played-val').value  = stats.played||0;
+
+  // Rank progress bar
+  const total = scores.length;
+  if(total>0 && rank>0){
+    const pct = Math.round(((total-rank)/total)*100);
+    document.getElementById('prof-rank-label').textContent = `Rank #${rank} of ${total} (top ${100-pct}%)`;
+    document.getElementById('prof-rank-fill').style.width  = pct+'%';
+  }
+
+  // Build emoji picker
+  buildEmojiPicker(saved.avatar||'🌍');
+}
+
+function buildEmojiPicker(current){
+  const emojis = ['🌍','🌎','🌏','🗺️','🧠','🎯','🏆','🥇','🌟','⭐','🦁','🐯','🦊','🐺','🦅','🐬','🦋','🌈','🎮','🕹️','🧩','🎲','👑','💎','🔥','⚡','🌊','🏔️','🌴','🎓'];
+  const picker = document.getElementById('emoji-picker');
+  picker.innerHTML = emojis.map(e=>`<button class="ep-btn${e===current?' sel':''}" onclick="selectAvatar('${e}',this)">${e}</button>`).join('');
+}
+
+function selectAvatar(emoji, btn){
+  document.querySelectorAll('.ep-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('profile-avatar').textContent = emoji;
+  const saved = JSON.parse(localStorage.getItem('gb_profile')||'{}');
+  saved.avatar = emoji;
+  localStorage.setItem('gb_profile', JSON.stringify(saved));
+  logActivity(`🎨 Avatar changed to ${emoji}`,'purple');
+}
+
+function saveProfileName(){
+  const val = document.getElementById('profile-name-inp').value.trim().slice(0,20);
+  if(!val){ setMsg('profile-name-msg','err','Enter a name'); return; }
+  localStorage.setItem(USERNAME_KEY, val);
+  document.getElementById('profile-name-display').textContent = val;
+  logActivity(`👤 Username changed to "${val}"`,'cyan');
+  setMsg('profile-name-msg','ok',`✅ Username saved: ${val}`);
+}
+
+function setCoinsDirectly(){
+  const val = parseInt(document.getElementById('set-coins-val').value)||0;
+  localStorage.setItem(COINS_KEY, Math.max(0,val));
+  refreshTopStats();
+  loadProfileTab();
+  logActivity(`💰 Coins set to ${val}`,'gold');
+  setMsg('profile-edit-msg','ok',`✅ Coins set to ${val}`);
+}
+
+function setStreakDirectly(){
+  const val = parseInt(document.getElementById('set-streak-val').value)||0;
+  const stats = getStats();
+  stats.streak = val;
+  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  refreshTopStats();
+  loadProfileTab();
+  logActivity(`🔥 Streak set to ${val}`,'orange');
+  setMsg('profile-edit-msg','ok',`✅ Streak set to ${val}`);
+}
+
+function setPlayedDirectly(){
+  const val = parseInt(document.getElementById('set-played-val').value)||0;
+  const stats = getStats();
+  stats.played = val;
+  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  refreshTopStats();
+  loadProfileTab();
+  logActivity(`🎮 Games played set to ${val}`,'blue');
+  setMsg('profile-edit-msg','ok',`✅ Games played set to ${val}`);
+}
+
+// ══════════════════════════════════════════════════════
+// ACHIEVEMENTS
+// ══════════════════════════════════════════════════════
+function getAchievements(){
+  try{ return JSON.parse(localStorage.getItem(ACH_KEY)||'{}') }catch{ return{} }
+}
+function renderAchievements(){
+  const unlocked = getAchievements();
+  const grid = document.getElementById('ach-grid');
+  grid.innerHTML = ACHIEVEMENTS_DEF.map(a=>{
+    const isUnlocked = unlocked[a.id] || a.req();
+    if(isUnlocked && !unlocked[a.id]){
+      const u = getAchievements();
+      u[a.id] = true;
+      localStorage.setItem(ACH_KEY, JSON.stringify(u));
+    }
+    return `<div class="ach-card${isUnlocked?' unlocked':''}">
+      <div class="ach-icon">${a.icon}</div>
+      <div>
+        <div class="ach-name">${a.name}</div>
+        <div class="ach-desc">${a.desc}</div>
+        <div class="ach-status ${isUnlocked?'done':'locked'}">${isUnlocked?'✅ UNLOCKED':'🔒 LOCKED'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function unlockAllAchievements(){
+  const all = {};
+  ACHIEVEMENTS_DEF.forEach(a=>{ all[a.id]=true; });
+  localStorage.setItem(ACH_KEY, JSON.stringify(all));
+  renderAchievements();
+  logActivity('🔓 All achievements unlocked','gold');
+  setMsg('ach-msg','ok','✅ All achievements unlocked!');
+}
+
+function resetAchievements(){
+  if(!confirm('Reset all achievements?')) return;
+  localStorage.removeItem(ACH_KEY);
+  renderAchievements();
+  logActivity('🗑️ Achievements reset','red');
+  setMsg('ach-msg','ok','✅ Achievements cleared');
+}
+
+// ══════════════════════════════════════════════════════
+// ANNOUNCEMENTS
+// ══════════════════════════════════════════════════════
+const ANN_STYLES = {
+  info:    {bg:'#1e3a5f', color:'#60a5fa', border:'#3b82f6'},
+  success: {bg:'#1a2e0a', color:'#86efac', border:'#639922'},
+  warning: {bg:'#3b2700', color:'#fcd34d', border:'#f59e0b'},
+  danger:  {bg:'#3b0a0a', color:'#fca5a5', border:'#ef4444'},
+  purple:  {bg:'#2e1a5f', color:'#c4b5fd', border:'#8b5cf6'},
+};
+
+function loadAnnouncement(){
+  const ann = JSON.parse(localStorage.getItem(ANN_KEY)||'{}');
+  if(ann.text) document.getElementById('cfg-ann-text').value = ann.text;
+  if(ann.style) document.getElementById('cfg-ann-style').value = ann.style;
+  if(ann.icon)  document.getElementById('cfg-ann-icon').value  = ann.icon;
+  if(ann.enabled !== undefined) document.getElementById('cfg-ann-enabled').classList.toggle('on', ann.enabled);
+  updateAnnPreview();
+}
+
+function updateAnnPreview(){
+  const text  = document.getElementById('cfg-ann-text').value || 'Your announcement here';
+  const style = document.getElementById('cfg-ann-style').value;
+  const icon  = document.getElementById('cfg-ann-icon').value || '📢';
+  const s     = ANN_STYLES[style] || ANN_STYLES.info;
+  const banner= document.getElementById('ann-preview-banner');
+  banner.style.background = s.bg;
+  banner.style.color      = s.color;
+  banner.style.border     = `1.5px solid ${s.border}`;
+  document.getElementById('ann-preview-icon').textContent = icon;
+  document.getElementById('ann-preview-text').textContent = text;
+}
+
+function saveAnnouncement(){
+  const ann = {
+    enabled: document.getElementById('cfg-ann-enabled').classList.contains('on'),
+    text:    document.getElementById('cfg-ann-text').value.trim(),
+    style:   document.getElementById('cfg-ann-style').value,
+    icon:    document.getElementById('cfg-ann-icon').value || '📢',
+  };
+  localStorage.setItem(ANN_KEY, JSON.stringify(ann));
+  logActivity(`📢 Announcement updated: "${ann.text.slice(0,30)}..."`,'blue');
+  setMsg('ann-msg','ok','✅ Announcement saved!');
+}
+
+function setTemplate(text, style){
+  document.getElementById('cfg-ann-text').value  = text;
+  document.getElementById('cfg-ann-style').value = style;
+  document.getElementById('cfg-ann-enabled').classList.add('on');
+  updateAnnPreview();
+}
+
+// ══════════════════════════════════════════════════════
+// PRESETS
+// ══════════════════════════════════════════════════════
+const PRESET_DEFS = {
+  casual:   {rounds:10, diff:'easy',   timer:false, timerSecs:90,  maxGuesses:5, hearts:5, clueCost:10, startCoins:200, confetti:true,  facts:true},
+  classic:  {rounds:10, diff:'medium', timer:false, timerSecs:60,  maxGuesses:5, hearts:5, clueCost:30, startCoins:100, confetti:true,  facts:true},
+  speed:    {rounds:15, diff:'hard',   timer:true,  timerSecs:20,  maxGuesses:5, hearts:5, clueCost:50, startCoins:150, confetti:false, facts:false},
+  expert:   {rounds:20, diff:'expert', timer:true,  timerSecs:45,  maxGuesses:4, hearts:3, clueCost:60, startCoins:50,  confetti:true,  facts:true,  repeats:false},
+  kids:     {rounds:5,  diff:'easy',   timer:false, timerSecs:120, maxGuesses:7, hearts:7, clueCost:5,  startCoins:500, confetti:true,  facts:true},
+  marathon: {rounds:30, diff:'medium', timer:false, timerSecs:60,  maxGuesses:5, hearts:5, clueCost:30, startCoins:100, confetti:true,  facts:true,  repeats:false},
+  party:    {rounds:8,  diff:'easy',   timer:false, timerSecs:60,  maxGuesses:6, hearts:6, clueCost:10, startCoins:300, confetti:true,  facts:true},
+  streamer: {rounds:15, diff:'hard',   timer:true,  timerSecs:30,  maxGuesses:5, hearts:5, clueCost:40, startCoins:100, confetti:true,  facts:true},
+};
+
+function applyPreset(name){
+  const p = PRESET_DEFS[name];
+  if(!p) return;
+  const cur = getSettings();
+  const merged = Object.assign(cur, p);
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged));
+  loadSettingsIntoUI();
+  logActivity(`🎯 Preset applied: ${name.toUpperCase()}`,'cyan');
+  setMsg('preset-msg','ok',`✅ "${name}" preset applied! Go to Gameplay tab to fine-tune.`);
+  showSaveBanner();
+}
+
+function saveCustomPreset(){
+  const name = document.getElementById('custom-preset-name').value.trim();
+  if(!name){ setMsg('custom-preset-msg','err','Enter a preset name'); return; }
+  const s = getSettings();
+  const existing = JSON.parse(localStorage.getItem(CUSTOM_PRESET_KEY)||'[]');
+  existing.push({name, settings:s, date:new Date().toLocaleDateString()});
+  localStorage.setItem(CUSTOM_PRESET_KEY, JSON.stringify(existing));
+  loadCustomPresets();
+  logActivity(`💾 Custom preset saved: "${name}"`,'green');
+  setMsg('custom-preset-msg','ok',`✅ Saved preset "${name}"`);
+}
+
+function loadCustomPresets(){
+  const existing = JSON.parse(localStorage.getItem(CUSTOM_PRESET_KEY)||'[]');
+  const wrap = document.getElementById('custom-preset-wrap');
+  if(!existing.length){
+    wrap.innerHTML = '<p style="font-size:12px;color:var(--muted);font-weight:700">No custom presets saved yet.</p>';
+    return;
+  }
+  wrap.innerHTML = existing.map((p,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:10px;margin-bottom:8px">
+      <div style="flex:1"><div style="font-weight:800;font-size:13px">${escHtml(p.name)}</div><div style="font-size:10px;color:var(--muted)">${p.date}</div></div>
+      <button class="btn btn-green btn-sm" onclick="loadCustomPreset(${i})">Load</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCustomPreset(${i})">✕</button>
+    </div>`).join('');
+}
+
+function loadCustomPreset(i){
+  const existing = JSON.parse(localStorage.getItem(CUSTOM_PRESET_KEY)||'[]');
+  if(!existing[i]) return;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(existing[i].settings));
+  loadSettingsIntoUI();
+  logActivity(`📂 Custom preset loaded: "${existing[i].name}"`,'cyan');
+  setMsg('custom-preset-msg','ok',`✅ Loaded preset "${existing[i].name}"`);
+  showSaveBanner();
+}
+
+function deleteCustomPreset(i){
+  const existing = JSON.parse(localStorage.getItem(CUSTOM_PRESET_KEY)||'[]');
+  const name = existing[i]?.name;
+  existing.splice(i,1);
+  localStorage.setItem(CUSTOM_PRESET_KEY, JSON.stringify(existing));
+  loadCustomPresets();
+  setMsg('custom-preset-msg','ok',`Deleted "${name}"`);
+}
+
+// ══════════════════════════════════════════════════════
+// APPEARANCE
+// ══════════════════════════════════════════════════════
+function loadMapStyle(){
+  const current = localStorage.getItem(MAP_STYLE_KEY)||'voyager';
+  document.querySelectorAll('.map-style-card').forEach(c=>{
+    c.classList.toggle('sel', c.dataset.style===current);
+  });
+}
+
+function selectMapStyle(el){
+  document.querySelectorAll('.map-style-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const style = el.dataset.style;
+  localStorage.setItem(MAP_STYLE_KEY, style);
+  logActivity(`🗺️ Map style changed to ${style}`,'cyan');
+  setMsg('map-style-msg','ok',`✅ Map style set to "${style}" — reload game to apply`);
+}
+
+function loadAccentColor(){
+  const current = localStorage.getItem(ACCENT_KEY)||'#639922';
+  document.querySelectorAll('.color-swatch').forEach(c=>{
+    c.classList.toggle('sel', c.dataset.color===current);
+  });
+}
+
+function selectColor(el){
+  document.querySelectorAll('.color-swatch').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const color = el.dataset.color;
+  localStorage.setItem(ACCENT_KEY, color);
+  logActivity(`🎨 Accent colour changed to ${color}`,'cyan');
+  setMsg('color-msg','ok',`✅ Accent colour saved — reload game to apply`);
+}
+
+function loadBranding(){
+  const b = JSON.parse(localStorage.getItem(BRANDING_KEY)||'{}');
+  if(b.title)   document.getElementById('cfg-game-title').value = b.title;
+  if(b.tagline) document.getElementById('cfg-tagline').value   = b.tagline;
+}
+
+function saveBranding(){
+  const b = {
+    title:   document.getElementById('cfg-game-title').value.trim()||'GeoBrain',
+    tagline: document.getElementById('cfg-tagline').value.trim(),
+  };
+  localStorage.setItem(BRANDING_KEY, JSON.stringify(b));
+  logActivity(`✏️ Branding updated: "${b.title}"`,'cyan');
+  setMsg('branding-msg','ok','✅ Branding saved — reload game to apply');
+}
+
+// ══════════════════════════════════════════════════════
+// REGIONS
+// ══════════════════════════════════════════════════════
+function loadRegions(){
+  const s = getSettings();
+  const active = s.regions || ['Africa','Americas','Asia','Europe','Oceania'];
+  document.querySelectorAll('.region-pill').forEach(p=>{
+    p.classList.toggle('on', active.includes(p.dataset.region));
+  });
+}
+
+function toggleRegion(el){
+  el.classList.toggle('on');
+  const active = getActiveRegions();
+  setMsg('region-msg','warn',`${active.length} region(s) active — save settings to apply`);
+}
+
+function getActiveRegions(){
+  const active = [];
+  document.querySelectorAll('.region-pill.on').forEach(p=>active.push(p.dataset.region));
+  return active;
+}
+
+function selectAllRegions(){
+  document.querySelectorAll('.region-pill').forEach(p=>p.classList.add('on'));
+}
+
+function clearAllRegions(){
+  document.querySelectorAll('.region-pill').forEach(p=>p.classList.remove('on'));
+}
+
+// ══════════════════════════════════════════════════════
+// DAILY
+// ══════════════════════════════════════════════════════
+function loadDailyInfo(){
+  const d = new Date();
+  const seed = d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+  const override = localStorage.getItem(DAILY_OVERRIDE);
+  const todayKey = `gb_daily_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+  const todayResult = localStorage.getItem(todayKey);
+
+  let html = '<div style="display:flex;flex-direction:column;gap:0">';
+  html += `<div class="setting-row"><div class="sr-label">Today's Date</div><span style="font-family:'Space Mono',monospace;color:var(--muted)">${d.toLocaleDateString()}</span></div>`;
+  html += `<div class="setting-row"><div class="sr-label">Daily Seed</div><span style="font-family:'Space Mono',monospace;color:var(--muted)">${seed}</span></div>`;
+  html += `<div class="setting-row"><div class="sr-label">Override Active</div><span style="font-family:'Space Mono',monospace;color:${override?'var(--gold)':'var(--muted)'}">${override||'None (auto)'}</span></div>`;
+  html += `<div class="setting-row"><div class="sr-label">Today Completed</div><span style="color:${todayResult?'var(--green)':'var(--muted)'}">${todayResult?'✅ Yes':'❌ Not yet'}</span></div>`;
+
+  if(override) document.getElementById('daily-override').value = override;
+
+  if(todayResult){
+    try{
+      const p = JSON.parse(todayResult);
+      html += `<div style="background:var(--surface2);border-radius:10px;padding:14px;margin-top:8px">
+        <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Today's Result</div>
+        <div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--green)">${(p.score||0).toLocaleString()} pts</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Country: <strong style="color:var(--wht)">${p.country||'?'}</strong></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Guesses used: ${p.guesses?.length||'?'}</div>
+      </div>`;
+    }catch{}
+  }
+  html += '</div>';
+  document.getElementById('daily-info').innerHTML = html;
+
+  // History
+  const hist = [];
+  for(let i=0;i<30;i++){
+    const dd=new Date(d); dd.setDate(dd.getDate()-i);
+    const key=`gb_daily_${dd.getFullYear()}_${dd.getMonth()}_${dd.getDate()}`;
+    const val=localStorage.getItem(key);
+    if(val){ try{ const p=JSON.parse(val); hist.push({date:dd.toLocaleDateString(),...p}); }catch{} }
+  }
+  document.getElementById('daily-history').innerHTML = hist.length ? hist.map(h=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0">${h.date}</div>
+      <div style="flex:1;font-weight:800">${h.country||'?'}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:13px;color:var(--green)">${(h.score||0).toLocaleString()}</div>
+    </div>`).join('') : '<p style="color:var(--muted);font-size:13px">No history yet.</p>';
+}
+
+function saveDailyOverride(){
+  const val = document.getElementById('daily-override').value.trim();
+  if(!val){ setMsg('daily-override-msg','err','Enter a country name'); return; }
+  localStorage.setItem(DAILY_OVERRIDE, val);
+  logActivity(`🌟 Daily override set: "${val}"`,'gold');
+  setMsg('daily-override-msg','ok',`✅ Override set to "${val}" — reload game to apply`);
+  loadDailyInfo();
+}
+
+function clearDailyOverride(){
+  localStorage.removeItem(DAILY_OVERRIDE);
+  document.getElementById('daily-override').value='';
+  setMsg('daily-override-msg','ok','✅ Override cleared');
+  loadDailyInfo();
+}
+
+function resetTodayResult(){
+  if(!confirm("Remove today's daily completion?")) return;
+  const d=new Date();
+  localStorage.removeItem(`gb_daily_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`);
+  logActivity('🗑️ Daily challenge reset — can replay today','gold');
+  setMsg('daily-override-msg','ok','✅ Daily reset — player can replay');
+  loadDailyInfo();
+}
+
+// ══════════════════════════════════════════════════════
+// ACTIVITY LOG
+// ══════════════════════════════════════════════════════
+function logActivity(text, color='green'){
+  const logs = JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]');
+  logs.unshift({text, color, time:new Date().toLocaleTimeString()});
+  if(logs.length>100) logs.length=100;
+  localStorage.setItem(ACTIVITY_KEY, JSON.stringify(logs));
+}
+
+function loadActivityUI(){
+  const logs = JSON.parse(localStorage.getItem(ACTIVITY_KEY)||'[]');
+  const el = document.getElementById('activity-list');
+  if(!logs.length){
+    el.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px;font-weight:700">No activity yet.</p>';
+    return;
+  }
+  el.innerHTML = logs.slice(0,50).map(l=>`
+    <div class="activity-item">
+      <div class="activity-dot ${l.color||'green'}"></div>
+      <div class="activity-text">${escHtml(l.text)}</div>
+      <div class="activity-time">${l.time}</div>
+    </div>`).join('');
+}
+
+function clearActivityLog(){
+  if(!confirm('Clear the activity log?')) return;
+  localStorage.removeItem(ACTIVITY_KEY);
+  loadActivityUI();
+}
+
+// ══════════════════════════════════════════════════════
+// STORAGE INFO
+// ══════════════════════════════════════════════════════
+function loadStorageInfo(){
+  let total=0, keys=0;
+  for(const k in localStorage){ if(k.startsWith('gb_')){ total+=(localStorage[k]||'').length*2; keys++; } }
+  document.getElementById('storage-used').textContent = total<1024 ? total+' B' : (total/1024).toFixed(1)+' KB';
+  document.getElementById('storage-keys').textContent = keys+' keys';
+  document.getElementById('last-save').textContent = localStorage.getItem(LAST_SAVE_KEY)||'Never';
+  document.getElementById('stored-username').textContent = getUsername()||'(none)';
+}
+
+// ══════════════════════════════════════════════════════
+// SECURITY
+// ══════════════════════════════════════════════════════
+function checkPwStrength(){
+  const pw=document.getElementById('sec-new').value;
+  const bar=document.getElementById('pw-strength-bar');
+  if(!pw.length){ bar.className='pw-strength'; bar.style.width='0'; return; }
+  if(pw.length<6) bar.className='pw-strength weak';
+  else if(pw.length<10) bar.className='pw-strength medium';
+  else bar.className='pw-strength strong';
+}
+
+function changePassword(){
+  const current=document.getElementById('sec-current').value;
+  const newPw=document.getElementById('sec-new').value;
+  const confirm=document.getElementById('sec-confirm').value;
+  if(current!==getAdminPw()){ setMsg('pw-change-msg','err','❌ Current password is wrong'); return; }
+  if(newPw.length<4){ setMsg('pw-change-msg','err','❌ At least 4 characters required'); return; }
+  if(newPw!==confirm){ setMsg('pw-change-msg','err','❌ Passwords do not match'); return; }
+  localStorage.setItem(ADMIN_PW_KEY, newPw);
+  ['sec-current','sec-new','sec-confirm'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pw-strength-bar').className='pw-strength';
+  logActivity('🔐 Admin password changed','purple');
+  setMsg('pw-change-msg','ok','✅ Password updated');
+}
+
+function exportAllData(){
+  const data={};
+  for(const k in localStorage){ if(k.startsWith('gb_')) data[k]=localStorage[k]; }
+  const a=document.createElement('a');
+  a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
+  a.download='geobrain_backup.json';
+  a.click();
+  logActivity('📦 Full data export downloaded','blue');
+}
+
+// ══════════════════════════════════════════════════════
+// DANGER ZONE
+// ══════════════════════════════════════════════════════
+function dangerResetScores(){
+  if(!confirm('Delete ALL leaderboard scores?')) return;
+  localStorage.removeItem(SCORES_KEY);
+  refreshScores(); refreshTopStats();
+  logActivity('☠️ All scores deleted','red');
+  alert('✅ Scores cleared');
+}
+
+function dangerResetStats(){
+  if(!confirm('Reset all player stats?')) return;
+  localStorage.removeItem(STATS_KEY);
+  refreshTopStats();
+  logActivity('☠️ Player stats reset','red');
+  alert('✅ Stats reset');
+}
+
+function dangerResetCoins(){
+  if(!confirm('Set player coins to 0?')) return;
+  localStorage.setItem(COINS_KEY,'0');
+  refreshTopStats();
+  logActivity('☠️ Coins reset to 0','red');
+  alert('✅ Coins set to 0');
+}
+
+function dangerResetDaily(){
+  if(!confirm("Reset today's daily challenge?")) return;
+  const d=new Date();
+  localStorage.removeItem(`gb_daily_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`);
+  logActivity('☠️ Daily challenge reset','red');
+  alert('✅ Daily reset');
+}
+
+function dangerResetUsername(){
+  if(!confirm('Clear the saved username?')) return;
+  localStorage.removeItem(USERNAME_KEY);
+  logActivity('☠️ Username cleared','red');
+  alert('✅ Username cleared — player will be prompted again');
+}
+
+function dangerNuke(){
+  if(!confirm('⚠️ DELETE ALL GeoBrain data? Irreversible!')) return;
+  if(!confirm('Are you absolutely sure? Everything goes.')) return;
+  const keys=[];
+  for(const k in localStorage){ if(k.startsWith('gb_')) keys.push(k); }
+  keys.forEach(k=>localStorage.removeItem(k));
+  clearSession();
+  alert('💥 All data deleted. Redirecting...');
+  location.reload();
+}
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+function setMsg(id, type, text){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.innerHTML=`<span class="inline-msg ${type}">${text}</span>`;
+  setTimeout(()=>{ if(el.querySelector('.inline-msg')?.textContent===text) el.innerHTML=''; },4000);
+}
+
+function escHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+if(getSession()) initPanel();
+</script>
+</body>
+</html>
