@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>GeoBrain By Kai 🌍</title>
+<meta name="theme-color" content="#f4f6f0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f6f0;--green:#639922;--gl:#e8f0d8;--gm:#c8dda0;
+  --gold:#f59e0b;--goldd:#d97706;
+  --red:#ff4b2b;--blk:#1a1a1a;--wht:#fff;--purple:#7c3aed;
+  --sh:8px 8px 0 #1a1a1a;--shsm:4px 4px 0 #1a1a1a;
+  --bd:3px solid #1a1a1a;--r:14px;--hdr:56px;--mob:0;
+}
+html,body{height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;background:var(--bg);display:flex;flex-direction:column;height:100vh;touch-action:manipulation}
+
+/* ══ LOADER ══ */
+#loader{position:fixed;inset:0;background:var(--blk);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#loader .logo{font-family:'Space Mono',monospace;font-size:40px;font-weight:700;color:var(--wht)}
+#loader .logo span{color:var(--green)}
+#loader .bar{width:200px;height:6px;background:#333;border-radius:3px;overflow:hidden}
+#loader .fill{height:100%;background:var(--green);border-radius:3px;animation:load 2s ease forwards}
+@keyframes load{from{width:0}to{width:100%}}
+#loader .sub{font-size:13px;color:#aaa;font-family:'Space Mono',monospace}
+#loader.done{animation:fadeOut 0.5s 0.3s forwards}
+@keyframes fadeOut{to{opacity:0;pointer-events:none}}
+
+/* ══ KEBAB ══ */
+#kebab-wrap{position:fixed;top:15px;right:15px;z-index:10000;display:none}
+#kebab-btn{background:var(--wht);border:var(--bd);width:40px;height:40px;border-radius:10px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shsm);font-weight:900;color:var(--blk)}
+#kebab-btn:active{transform:translate(2px,2px);box-shadow:none}
+#kebab-menu{position:absolute;top:50px;right:0;background:var(--wht);border:var(--bd);border-radius:var(--r);box-shadow:var(--sh);width:200px;display:none;overflow:hidden}
+#kebab-menu.open{display:block}
+.menu-item{padding:13px 16px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;border-bottom:2px solid #eee;cursor:pointer;display:flex;align-items:center;gap:8px}
+.menu-item:last-child{border-bottom:none}
+.menu-item:hover{background:var(--gl)}
+.menu-item:active{background:var(--gm)}
+
+/* ══ USERNAME MODAL ══ */
+#username-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+#username-modal.hidden{display:none}
+.un-card{background:var(--wht);border:var(--bd);border-radius:20px;box-shadow:var(--sh);padding:28px;max-width:360px;width:100%;text-align:center}
+.un-logo{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--blk);margin-bottom:4px}
+.un-logo span{color:var(--green)}
+.un-sub{font-size:12px;color:#888;font-weight:700;letter-spacing:1px;margin-bottom:20px;text-transform:uppercase}
+.un-label{font-size:12px;font-weight:800;color:var(--blk);text-align:left;margin-bottom:6px;letter-spacing:0.5px}
+.un-input{width:100%;padding:13px 16px;border:2px solid var(--blk);border-radius:10px;font-family:'Space Mono',monospace;font-size:16px;font-weight:700;background:var(--bg);color:var(--blk);outline:none;text-align:center;margin-bottom:14px;transition:border-color 0.2s}
+.un-input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(99,153,34,0.15)}
+.un-btn{width:100%;padding:14px;background:var(--green);color:var(--wht);border:var(--bd);border-radius:10px;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;box-shadow:var(--shsm);transition:all 0.1s}
+.un-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--blk)}
+.un-welcome{font-size:12px;color:#aaa;margin-top:12px;font-weight:700}
+#mode-screen{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+#mode-screen.hidden{display:none}
+.ms-logo{font-family:'Space Mono',monospace;font-size:clamp(28px,6vw,48px);font-weight:700;color:var(--blk);letter-spacing:-2px;margin-bottom:2px}
+.ms-logo span{color:var(--green)}
+.ms-tag{font-size:11px;color:#888;margin-bottom:clamp(14px,3vh,28px);font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.ms-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:500px;margin-bottom:12px}
+.ms-card{background:var(--wht);border:var(--bd);border-radius:var(--r);padding:clamp(14px,3vw,22px) 14px;cursor:pointer;box-shadow:var(--sh);transition:all 0.12s;text-align:center;position:relative;overflow:hidden;-webkit-user-select:none;user-select:none}
+.ms-card:hover{transform:translate(-3px,-3px);box-shadow:11px 11px 0 var(--blk)}
+.ms-card:active{transform:translate(4px,4px)!important;box-shadow:2px 2px 0 var(--blk)!important}
+.ms-icon{font-size:clamp(26px,5vw,36px);margin-bottom:6px;display:block}
+.ms-label{font-family:'Space Mono',monospace;font-size:clamp(11px,2.5vw,13px);font-weight:700;color:var(--blk);margin-bottom:3px}
+.ms-desc{font-size:clamp(9px,2vw,11px);color:#888;font-weight:600;line-height:1.4}
+.ms-card.grn{background:var(--green)}.ms-card.grn .ms-label,.ms-card.grn .ms-desc{color:var(--wht)}
+.ms-card.gold-card{background:#fffbe6;border-color:var(--gold)}.ms-card.gold-card .ms-badge{background:var(--gold);color:var(--blk)}
+.ms-card.dark{background:var(--blk)}.ms-card.dark .ms-label,.ms-card.dark .ms-desc{color:var(--wht)}
+.ms-badge{position:absolute;top:8px;right:8px;background:var(--red);color:var(--wht);font-family:'Space Mono',monospace;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;border:1.5px solid var(--blk)}
+
+/* ══ STATS BAR ══ */
+.ms-stats{display:flex;gap:10px;max-width:500px;width:100%}
+.ms-stat{flex:1;background:var(--wht);border:2px solid var(--blk);border-radius:10px;padding:10px;text-align:center;box-shadow:3px 3px 0 var(--blk);cursor:default}
+.ms-stat-v{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--green)}
+.ms-stat-v.coin-v{color:var(--goldd)}
+.ms-stat-l{font-size:9px;color:#888;font-weight:700;margin-top:2px}
+
+/* ══ COIN DISPLAY IN HEADER ══ */
+#coin-disp{font-family:'Space Mono',monospace;font-size:clamp(10px,2.5vw,13px);font-weight:700;background:#fffbe6;color:var(--goldd);padding:4px 8px;border:2px solid var(--blk);border-radius:6px;box-shadow:3px 3px 0 var(--blk);white-space:nowrap;display:flex;align-items:center;gap:4px}
+
+/* ══ MODALS ══ */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:16px}
+.modal.open{display:flex}
+.modal-card{background:var(--wht);border:var(--bd);border-radius:20px;box-shadow:var(--sh);padding:clamp(20px,4vw,28px);max-width:400px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Space Mono',monospace;font-size:clamp(14px,3vw,18px);font-weight:700;margin-bottom:16px;color:var(--blk)}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;padding:9px;border:2px solid var(--blk);border-radius:9px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;background:var(--bg);transition:all 0.1s}
+.tab.on{background:var(--blk);color:var(--wht)}
+.tsec{display:none}.tsec.on{display:block}
+.m-input{width:100%;padding:11px 14px;border:2px solid var(--blk);border-radius:9px;font-family:'Space Mono',monospace;font-size:18px;font-weight:700;background:var(--bg);color:var(--blk);outline:none;margin-bottom:12px;text-align:center;letter-spacing:4px}
+.m-input.sm{font-size:14px;letter-spacing:0;font-family:'Nunito',sans-serif;text-align:left}
+.m-btn{width:100%;padding:13px;border:var(--bd);border-radius:9px;font-family:'Space Mono',monospace;font-size:clamp(11px,2.5vw,13px);font-weight:700;cursor:pointer;box-shadow:var(--shsm);transition:all 0.1s;margin-bottom:8px}
+.m-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--blk)}
+.m-btn.pri{background:var(--green);color:var(--wht)}.m-btn.sec{background:var(--bg);color:var(--blk)}.m-btn.danger{background:var(--red);color:var(--wht)}.m-btn.gold{background:var(--gold);color:var(--blk)}
+#code-box{background:var(--gl);border:2px solid var(--blk);border-radius:9px;padding:14px;text-align:center;margin-bottom:12px}
+#code-box .code{font-family:'Space Mono',monospace;font-size:clamp(24px,5vw,32px);font-weight:700;letter-spacing:8px;color:var(--green)}
+#code-box .sub{font-size:11px;color:#888;margin-top:3px;font-weight:600}
+.m-status{font-size:11px;color:#888;text-align:center;font-weight:600;min-height:16px;margin-bottom:8px}
+.pnp-row{display:flex;gap:8px;margin-bottom:12px}
+
+/* ══ ADMIN ══ */
+.admin-section{background:var(--bg);border:2px solid var(--blk);border-radius:10px;padding:12px;margin-bottom:12px}
+.admin-section-title{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);margin-bottom:10px}
+.admin-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.admin-label{font-size:13px;font-weight:700;color:var(--blk)}
+.admin-sub{font-size:10px;color:#888}
+.toggle{width:44px;height:24px;background:#ccc;border-radius:12px;border:2px solid var(--blk);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:var(--wht);border-radius:50%;transition:transform 0.2s;box-shadow:1px 1px 0 rgba(0,0,0,0.2)}
+.toggle.on::after{transform:translateX(20px)}
+.admin-select{padding:6px 10px;border:2px solid var(--blk);border-radius:7px;font-family:'Space Mono',monospace;font-size:12px;background:var(--wht);cursor:pointer;outline:none}
+.admin-num{width:70px;padding:6px 10px;border:2px solid var(--blk);border-radius:7px;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;background:var(--wht);outline:none;text-align:center}
+.admin-scoreboard{max-height:160px;overflow-y:auto}
+.sb-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;font-size:13px;font-weight:700}
+.sb-rank{font-family:'Space Mono',monospace;font-size:11px;color:#888;width:20px}
+.sb-name{flex:1}.sb-score{font-family:'Space Mono',monospace;font-size:12px;color:var(--green)}
+
+/* ══ HEADER ══ */
+#header{background:var(--wht);border-bottom:var(--bd);padding:0 10px;height:var(--hdr);display:flex;align-items:center;justify-content:space-between;gap:6px;flex-shrink:0;z-index:1000;position:relative}
+#logo{font-family:'Space Mono',monospace;font-size:clamp(15px,3.5vw,20px);font-weight:700;color:var(--blk);letter-spacing:-1px;cursor:pointer;flex-shrink:0}
+#logo span{color:var(--green)}
+#hdr-mid{text-align:center;flex:1;min-width:0}
+#round-text{font-family:'Space Mono',monospace;font-size:clamp(8px,2vw,11px);color:var(--blk);white-space:nowrap}
+#mode-badge{font-family:'Space Mono',monospace;font-size:8px;font-weight:700;padding:2px 7px;border-radius:4px;border:1.5px solid var(--blk);background:var(--blk);color:var(--wht);display:inline-block;margin-top:2px}
+#hdr-right{display:flex;align-items:center;gap:5px;flex-shrink:0}
+#hearts{display:flex;gap:2px}
+.heart{font-size:clamp(13px,3vw,17px);transition:transform 0.3s,opacity 0.3s}
+.heart.lost{opacity:0.15;transform:scale(0.7)}
+#score-disp{font-family:'Space Mono',monospace;font-size:clamp(9px,2vw,12px);font-weight:700;background:var(--green);color:var(--wht);padding:4px 7px;border:2px solid var(--blk);border-radius:6px;box-shadow:3px 3px 0 var(--blk);white-space:nowrap}
+/* admin btn removed */
+
+/* ══ GUESS TRACKER ══ */
+#guess-tracker{position:absolute;top:10px;right:10px;z-index:502;background:var(--wht);border:var(--bd);border-radius:12px;padding:8px 12px;box-shadow:var(--shsm);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:90px}
+#gt-label{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#888}
+#gt-dots{display:flex;gap:5px}
+.gt-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--blk);background:#eee;transition:all 0.3s}
+.gt-dot.wrong{background:var(--red)}
+.gt-dot.close{background:var(--gold)}
+.gt-dot.correct{background:var(--green)}
+.gt-dot.current{border-color:var(--green);box-shadow:0 0 0 2px rgba(99,153,34,0.3);animation:pulse2 1s infinite}
+@keyframes pulse2{0%,100%{box-shadow:0 0 0 2px rgba(99,153,34,0.3)}50%{box-shadow:0 0 0 4px rgba(99,153,34,0.15)}}
+#gt-sub{font-family:'Space Mono',monospace;font-size:9px;color:#666;font-weight:700}
+
+/* ══ GUESS HISTORY PANEL (wrong guesses for same country) ══ */
+#guess-history-panel{position:absolute;top:10px;left:10px;z-index:502;background:var(--wht);border:var(--bd);border-radius:12px;padding:8px;box-shadow:var(--shsm);display:none;min-width:160px;max-width:200px}
+#ghp-label{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:6px}
+#ghp-list{display:flex;flex-direction:column;gap:4px}
+.ghp-row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:7px;font-size:11px;font-weight:700}
+.ghp-row.wrong-g{background:#fff0ee;border:1.5px solid #ffccc7}
+.ghp-row.close-g{background:#fffbe6;border:1.5px solid #fde68a}
+.ghp-flag-img{width:22px;height:15px;object-fit:cover;border-radius:2px;border:1px solid #ddd}
+.ghp-name{flex:1;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ghp-dist{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:#888}
+
+/* ══ MAIN ══ */
+#main{display:flex;flex:1;overflow:hidden;position:relative}
+#map{flex:1;height:100%;z-index:1}
+.leaflet-container{background:#dde8f0}
+.leaflet-control-zoom{border:var(--bd)!important;box-shadow:var(--shsm)!important}
+.leaflet-control-zoom a{font-family:'Space Mono',monospace!important;font-weight:700!important;color:var(--blk)!important}
+
+/* ══ CLUE CARD ══ */
+#clue-card{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--wht);border:var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:clamp(10px,2vw,14px) clamp(12px,3vw,18px);min-width:clamp(220px,52vw,380px);max-width:min(400px,calc(100vw - 130px));z-index:500;animation:sld 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes sld{from{transform:translateX(-50%) translateY(-20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+#clue-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px}
+#clue-lbl{font-family:'Space Mono',monospace;font-size:clamp(8px,1.8vw,10px);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);background:var(--gl);padding:3px 8px;border-radius:4px;border:1.5px solid var(--gm);flex-shrink:0}
+#clue-n{font-family:'Space Mono',monospace;font-size:10px;color:#888}
+#clue-txt{font-size:clamp(12px,2.5vw,14px);font-weight:700;color:var(--blk);line-height:1.5}
+#clue-extra{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.clue-chip{background:var(--bg);border:1.5px solid var(--blk);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;color:var(--blk)}
+
+/* ══ COIN CLUE BUTTON ══ */
+#hint-btn{margin-top:10px;width:100%;padding:9px;background:#fffbe6;border:2px solid var(--blk);border-radius:8px;font-family:'Nunito',sans-serif;font-size:clamp(11px,2.5vw,13px);font-weight:800;cursor:pointer;box-shadow:3px 3px 0 var(--blk);transition:all 0.1s;color:var(--blk);display:flex;align-items:center;justify-content:center;gap:6px}
+#hint-btn:hover{background:#fde68a}
+#hint-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--blk)}
+#hint-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;box-shadow:3px 3px 0 var(--blk)!important;background:#f0f0f0}
+
+/* ══ TIMER ══ */
+#timer-bar{position:absolute;top:0;left:0;right:0;height:4px;background:var(--green);transform-origin:left;transition:transform 0.1s linear;z-index:600}
+#timer-bar.warning{background:var(--red)}
+
+/* ══ SEARCH PANEL ══ */
+#search-panel{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:min(92%,500px);z-index:500}
+#search-wrap{background:var(--wht);border:var(--bd);border-radius:var(--r);box-shadow:var(--sh);padding:10px}
+#search-row{display:flex;gap:8px}
+#guess-input{flex:1;height:clamp(40px,6vh,48px);padding:0 12px;border:2px solid var(--blk);border-radius:10px;font-family:'Nunito',sans-serif;font-size:clamp(13px,3vw,15px);font-weight:700;background:var(--bg);color:var(--blk);outline:none;transition:all 0.15s;min-width:0}
+#guess-input:focus{background:var(--wht);box-shadow:0 0 0 3px rgba(99,153,34,0.2);border-color:var(--green)}
+#guess-input.shake{animation:shk 0.4s}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+#guess-btn{height:clamp(40px,6vh,48px);padding:0 clamp(10px,3vw,18px);background:var(--green);color:var(--wht);border:2px solid var(--blk);border-radius:10px;font-family:'Space Mono',monospace;font-size:clamp(11px,2.5vw,13px);font-weight:700;cursor:pointer;box-shadow:var(--shsm);transition:all 0.1s;white-space:nowrap;flex-shrink:0}
+#guess-btn:hover{background:#527a1a}
+#guess-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--blk)}
+
+/* ══ AUTOCOMPLETE — enhanced with flag image, region, compass ══ */
+#ac-list{position:absolute;bottom:100%;left:0;right:0;background:var(--wht);border:var(--bd);border-radius:var(--r);box-shadow:var(--sh);max-height:min(260px,42vh);overflow-y:auto;margin-bottom:8px;display:none;z-index:600}
+#ac-list.open{display:block}
+.ac-item{padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #eee;transition:background 0.1s}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.sel{background:var(--gl)}
+.ac-flag-img{width:32px;height:22px;object-fit:cover;border-radius:3px;border:1.5px solid #ddd;flex-shrink:0}
+.ac-info{flex:1;min-width:0}
+.ac-name{font-size:clamp(13px,3vw,14px);font-weight:800;color:var(--blk)}
+.ac-name .m{color:var(--green)}
+.ac-meta{display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap}
+.ac-region{font-size:10px;font-weight:700;color:#888;background:var(--bg);border:1.5px solid #ddd;border-radius:4px;padding:1px 5px}
+.ac-compass{font-size:10px;font-weight:700;color:var(--purple);background:#f3f0ff;border:1.5px solid #c4b5fd;border-radius:4px;padding:1px 5px}
+.ac-capital{font-size:10px;color:#aaa;font-weight:700}
+
+/* ══ HISTORY TRAY ══ */
+#hist-tray{position:absolute;right:10px;top:10px;bottom:clamp(70px,12vh,90px);width:clamp(150px,17vw,185px);z-index:400;display:flex;flex-direction:column}
+#hist-lbl{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:6px}
+#hist-list{display:flex;flex-direction:column;gap:5px;overflow-y:auto;flex:1;scrollbar-width:thin}
+.hi{background:var(--wht);border:2px solid var(--blk);border-radius:10px;padding:6px 8px;display:flex;align-items:center;gap:7px;box-shadow:3px 3px 0 var(--blk);animation:pop 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes pop{from{transform:scale(0.8) translateX(20px);opacity:0}to{transform:scale(1) translateX(0);opacity:1}}
+.hi-flag{width:24px;height:16px;object-fit:cover;border-radius:2px;border:1px solid #ddd;flex-shrink:0}
+.hi-flag-emoji{font-size:16px;line-height:1;flex-shrink:0}
+.hi-info{flex:1;min-width:0}
+.hi-name{font-size:11px;font-weight:800;color:var(--blk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi-who{font-size:8px;color:#aaa;font-weight:700}
+.hi-dist{font-family:'Space Mono',monospace;font-size:9px;font-weight:700}
+.hi-dist.f{color:var(--red)}.hi-dist.c{color:var(--green)}.hi-dist.m{color:var(--gold)}
+
+/* ══ AI BADGE ══ */
+#ai-badge{position:absolute;left:10px;bottom:clamp(70px,12vh,90px);background:var(--blk);color:var(--wht);border:2px solid var(--blk);border-radius:10px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;z-index:400;box-shadow:var(--shsm);display:none}
+#ai-badge.on{display:block}
+
+/* ══ STREAK TOAST ══ */
+#streak-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:var(--blk);color:var(--wht);border:var(--bd);border-radius:16px;padding:16px 24px;font-family:'Space Mono',monospace;font-size:clamp(16px,4vw,22px);font-weight:700;z-index:800;pointer-events:none;text-align:center;box-shadow:var(--sh);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s}
+#streak-toast.show{transform:translate(-50%,-50%) scale(1)}
+#streak-toast.hide{transform:translate(-50%,-50%) scale(0);opacity:0}
+
+/* ══ COIN POPUP ══ */
+#coin-pop{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:#fffbe6;color:var(--goldd);border:3px solid var(--gold);border-radius:16px;padding:14px 22px;font-family:'Space Mono',monospace;font-size:clamp(16px,4vw,22px);font-weight:700;z-index:800;pointer-events:none;text-align:center;box-shadow:6px 6px 0 var(--blk);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s}
+#coin-pop.show{transform:translate(-50%,-50%) scale(1)}
+#coin-pop.hide{transform:translate(-50%,-50%) scale(0);opacity:0}
+
+/* ══ HANDOFF ══ */
+#handoff{position:fixed;inset:0;background:var(--blk);z-index:8000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px}
+#handoff.open{display:flex}
+#ho-emoji{font-size:clamp(50px,12vw,70px)}
+#ho-title{font-family:'Space Mono',monospace;font-size:clamp(18px,5vw,26px);font-weight:700;color:var(--wht);text-align:center}
+#ho-sub{font-size:clamp(12px,3vw,15px);color:#aaa;text-align:center;font-weight:600}
+#ho-scores{display:flex;gap:12px}
+.ho-score{background:#222;border:2px solid #444;border-radius:10px;padding:10px 16px;text-align:center}
+.ho-score-n{font-size:11px;color:#aaa;margin-bottom:3px}
+.ho-score-v{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--green)}
+#ho-btn{padding:16px clamp(24px,6vw,40px);background:var(--green);color:var(--wht);border:var(--bd);border-radius:14px;font-family:'Space Mono',monospace;font-size:clamp(14px,3vw,16px);font-weight:700;cursor:pointer;box-shadow:var(--sh);transition:all 0.1s}
+#ho-btn:active{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--blk)}
+
+/* ══ RESULT ══ */
+#result{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:16px}
+#result.open{display:flex}
+#rc{background:var(--wht);border:var(--bd);border-radius:20px;box-shadow:var(--sh);padding:clamp(18px,4vw,26px) clamp(18px,4vw,28px);max-width:440px;width:100%;text-align:center;animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1);max-height:90vh;overflow-y:auto}
+#r-flag-img{width:80px;height:54px;object-fit:cover;border-radius:6px;border:3px solid var(--blk);box-shadow:4px 4px 0 var(--blk);margin:0 auto 8px;display:block}
+#r-flag-emoji{font-size:clamp(40px,9vw,56px);margin-bottom:6px;display:none}
+#r-title{font-family:'Space Mono',monospace;font-size:clamp(16px,4vw,22px);font-weight:700;color:var(--blk);margin-bottom:4px}
+#r-sub{font-size:clamp(11px,2.5vw,13px);color:#666;margin-bottom:10px}
+#r-dist{font-family:'Space Mono',monospace;font-size:clamp(20px,5vw,28px);font-weight:700;margin-bottom:8px}
+#r-dist.win{color:var(--green)}#r-dist.loss{color:var(--red)}
+/* guess trail in result */
+#r-guesses{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;text-align:left}
+.rg-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700}
+.rg-row.rg-wrong{background:#fff0ee;border:1.5px solid #ffccc7}
+.rg-row.rg-close{background:#fffbe6;border:1.5px solid #fde68a}
+.rg-row.rg-correct{background:#f0fde7;border:1.5px solid var(--gm)}
+.rg-flag-img{width:24px;height:16px;object-fit:cover;border-radius:2px;border:1px solid #ddd}
+.rg-name{flex:1}
+.rg-dist{font-family:'Space Mono',monospace;font-size:10px;color:#888}
+#r-coins-earned{background:#fffbe6;border:2px solid var(--gold);border-radius:10px;padding:10px;margin-bottom:10px;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--goldd);display:none}
+#r-facts{background:var(--gl);border:2px solid var(--blk);border-radius:10px;padding:10px;margin-bottom:12px;text-align:left;font-size:12px;font-weight:700;color:var(--blk);display:none}
+#r-facts.show{display:block}
+#r-scores{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.rsb{flex:1;min-width:80px;background:var(--bg);border:2px solid var(--blk);border-radius:10px;padding:10px 8px;text-align:center}
+.rsb-n{font-size:10px;font-weight:800;color:#888;margin-bottom:4px}
+.rsb-v{font-family:'Space Mono',monospace;font-size:clamp(15px,4vw,20px);font-weight:700;color:var(--blk)}
+#r-next{width:100%;padding:clamp(12px,3vw,16px);background:var(--green);color:var(--wht);border:var(--bd);border-radius:12px;font-family:'Space Mono',monospace;font-size:clamp(12px,3vw,15px);font-weight:700;cursor:pointer;box-shadow:var(--shsm);transition:all 0.1s}
+#r-next:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--blk)}
+
+/* ══ GAME OVER ══ */
+#gameover{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:16px}
+#gameover.open{display:flex}
+#gc{background:var(--wht);border:var(--bd);border-radius:20px;box-shadow:12px 12px 0 var(--blk);padding:clamp(20px,5vw,30px);max-width:480px;width:100%;text-align:center;max-height:90vh;overflow-y:auto}
+#go-emo{font-size:clamp(44px,10vw,60px);margin-bottom:10px}
+#go-ttl{font-family:'Space Mono',monospace;font-size:clamp(20px,5vw,28px);font-weight:700;color:var(--blk);margin-bottom:14px}
+#go-scores{display:flex;gap:10px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.gsb{background:var(--bg);border:var(--bd);border-radius:12px;padding:12px 18px;min-width:100px;box-shadow:var(--shsm)}
+.gsb.win{background:var(--green)}.gsb.win .gsb-n,.gsb.win .gsb-v{color:var(--wht)}
+.gsb-n{font-size:11px;font-weight:800;color:#666;margin-bottom:4px}
+.gsb-v{font-family:'Space Mono',monospace;font-size:clamp(22px,6vw,30px);font-weight:700;color:var(--blk)}
+.gsb-l{font-size:9px;color:#888;font-weight:700}
+#go-win{font-size:clamp(13px,3vw,16px);font-weight:800;color:var(--blk);margin-bottom:16px}
+#go-sb{max-height:180px;overflow-y:auto;margin-bottom:16px}
+.go-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:8px;margin-bottom:5px;font-size:13px;font-weight:700}
+.go-rank{font-family:'Space Mono',monospace;font-size:11px;color:#888;width:22px}
+#go-btn{width:100%;padding:clamp(12px,3vw,16px);background:var(--blk);color:var(--wht);border:var(--bd);border-radius:12px;font-family:'Space Mono',monospace;font-size:clamp(13px,3vw,16px);font-weight:700;cursor:pointer;box-shadow:var(--shsm);transition:all 0.1s}
+#go-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--blk)}
+
+/* ══ DAILY MODAL ══ */
+.daily-done-box{background:var(--gl);border:2px solid var(--blk);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center}
+.daily-done-flag{width:70px;height:47px;object-fit:cover;border-radius:5px;border:2px solid var(--blk);box-shadow:3px 3px 0 var(--blk);margin:0 auto 8px;display:block}
+.daily-done-score{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:var(--green)}
+.daily-done-label{font-size:11px;color:#888;font-weight:700;margin-top:2px}
+.daily-guess-trail{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.dgt-row{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:7px;font-size:11px;font-weight:700}
+.dgt-row.dgt-w{background:#fff0ee;border:1.5px solid #ffccc7}
+.dgt-row.dgt-c{background:#fffbe6;border:1.5px solid #fde68a}
+.dgt-row.dgt-ok{background:#f0fde7;border:1.5px solid var(--gm)}
+.dgt-flag{width:22px;height:15px;object-fit:cover;border-radius:2px;border:1px solid #ddd}
+.dgt-name{flex:1}
+.dgt-dist{font-family:'Space Mono',monospace;font-size:9px;color:#888}
+
+/* ══ LEADERBOARD MODAL ══ */
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg);border-radius:9px;margin-bottom:6px;border:2px solid transparent}
+.lb-row.gold{background:#fffbe6;border-color:var(--gold)}
+.lb-rank{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#888;width:22px}
+.lb-name{flex:1;font-weight:800;font-size:13px}
+.lb-score{font-family:'Space Mono',monospace;font-size:12px;color:var(--green);font-weight:700}
+.lb-date{font-size:10px;color:#aaa}
+
+/* ══ TURN BANNER / ONLINE BAR ══ */
+#turn-banner{position:absolute;top:10px;left:10px;background:var(--blk);color:var(--wht);border:var(--bd);border-radius:var(--r);padding:10px 14px;z-index:500;font-family:'Space Mono',monospace;font-size:11px;box-shadow:var(--shsm);display:none}
+#turn-banner.on{display:block}
+#turn-name{font-size:clamp(13px,3vw,16px);color:var(--green);font-weight:700}
+#online-bar{position:absolute;left:10px;top:10px;background:var(--wht);border:var(--bd);border-radius:10px;padding:8px 12px;z-index:500;box-shadow:var(--shsm);display:none}
+#online-bar.on{display:block}
+.ob-lbl{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:2px}
+.ob-peer{font-size:12px;font-weight:800;color:var(--blk);display:flex;align-items:center;gap:6px}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ══ MOBILE — comprehensive fixes ══ */
+@media(max-width:640px){
+  :root{--hdr:52px}
+  #hist-tray{display:none!important}
+  #clue-card{
+    top:8px;left:8px;right:8px;transform:none!important;
+    min-width:0!important;max-width:calc(100vw - 90px)!important;
+    padding:8px 10px!important;font-size:12px
+  }
+  #turn-banner,#online-bar{display:none!important}
+  #mobile-turn{display:block}
+  #guess-tracker{min-width:60px;padding:5px 7px;top:8px;right:8px}
+  #guess-history-panel{display:none!important}
+  #search-panel{bottom:8px;width:calc(100% - 16px)}
+  #search-wrap{padding:8px}
+  #guess-input{font-size:14px!important}
+  #clue-lbl{font-size:8px!important}
+  #clue-txt{font-size:12px!important}
+  #hint-btn{font-size:11px!important;padding:7px!important}
+  #coin-disp{font-size:10px!important;padding:3px 6px!important}
+  #score-disp{font-size:9px!important;padding:3px 6px!important}
+  #hearts .heart{font-size:13px}
+  .gt-dot{width:11px;height:11px}
+  /* result modal full-screen on mobile */
+  #rc{border-radius:16px;padding:16px}
+  #gc{border-radius:16px;padding:16px}
+  /* mode screen adjustments */
+  .ms-grid{grid-template-columns:1fr 1fr!important}
+  .ms-card{padding:12px 10px!important}
+  /* admin modal full width */
+  .modal-card{border-radius:16px;max-height:95vh}
+  /* disable hover effects on touch */
+  .ms-card:hover{transform:none!important;box-shadow:var(--sh)!important}
+}
+@media(min-width:641px){#mobile-turn{display:none}}
+/* safe area for notched phones */
+@supports(padding:env(safe-area-inset-bottom)){
+  #search-panel{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  #header{padding-top:env(safe-area-inset-top)}
+}
+#mobile-turn{display:none;position:absolute;top:8px;left:8px;background:var(--blk);color:var(--wht);border-radius:10px;border:var(--bd);padding:6px 10px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;z-index:501;box-shadow:var(--shsm)}
+
+/* ══ CONFETTI ══ */
+.conf{position:fixed;pointer-events:none;z-index:9998;font-size:20px;animation:fall 1.5s ease-in forwards}
+@keyframes fall{from{transform:translateY(-20px) rotate(0deg);opacity:1}to{transform:translateY(100vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="logo">Geo<span>Brain</span></div>
+  <div class="bar"><div class="fill"></div></div>
+  <div class="sub" id="load-status">Loading countries...</div>
+</div>
+
+<!-- KEBAB -->
+<div id="kebab-wrap">
+  <button id="kebab-btn" onclick="toggleKebab()">⋮</button>
+  <div id="kebab-menu">
+    <div class="menu-item" onclick="openLB()">🏆 Leaderboard</div>
+    <div class="menu-item" onclick="closeKebab();openUsernameEdit()">👤 Change Name</div>
+    <div class="menu-item" onclick="closeKebab();resetAll()">🗑️ Reset Data</div>
+  </div>
+</div>
+
+<!-- USERNAME MODAL -->
+<div id="username-modal" class="hidden">
+  <div class="un-card">
+    <div class="un-logo">Geo<span>Brain</span></div>
+    <div class="un-sub">🌍 Geography Game By Kai</div>
+    <div class="un-label">Your Username</div>
+    <input id="un-input" class="un-input" type="text" maxlength="20" placeholder="Enter your name..." autocomplete="off"/>
+    <button class="un-btn" onclick="saveUsername()">LET'S PLAY →</button>
+    <div class="un-welcome" id="un-welcome"></div>
+  </div>
+</div>
+
+<!-- MODE SCREEN -->
+<div id="mode-screen" class="hidden">
+  <div class="ms-logo">Geo<span>Brain</span></div>
+  <div class="ms-tag">🌍 Geography Game By Kai</div>
+  <div class="ms-grid">
+    <div class="ms-card grn" style="grid-column:1/span 2" onclick="openDaily()">
+      <div class="ms-badge" style="background:#ffdb4d;color:#1a1a1a">TODAY</div>
+      <span class="ms-icon">🌟</span>
+      <div class="ms-label">DAILY CHALLENGE</div>
+      <div class="ms-desc">One country. Same worldwide. 5 guesses. Once every 24 hours!</div>
+    </div>
+    <div class="ms-card" onclick="startMode('solo')">
+      <span class="ms-icon">🎯</span>
+      <div class="ms-label">SOLO</div>
+      <div class="ms-desc">5 guesses per country. Level up!</div>
+    </div>
+    <div class="ms-card" onclick="startMode('ai')">
+      <div class="ms-badge" style="background:var(--blk)">BOT</div>
+      <span class="ms-icon">🤖</span>
+      <div class="ms-label">VS AI</div>
+      <div class="ms-desc">Beat the AI. Same country, 5 tries.</div>
+    </div>
+    <div class="ms-card" onclick="openPnP()">
+      <span class="ms-icon">🤝</span>
+      <div class="ms-label">PASS & PLAY</div>
+      <div class="ms-desc">Two players, one device.</div>
+    </div>
+    <div class="ms-card dark" onclick="openOnline()">
+      <div class="ms-badge">LIVE</div>
+      <span class="ms-icon">🌐</span>
+      <div class="ms-label">ONLINE</div>
+      <div class="ms-desc">Room code co-op with a friend.</div>
+    </div>
+  </div>
+  <div class="ms-stats">
+    <div class="ms-stat"><div class="ms-stat-v" id="stat-streak">0</div><div class="ms-stat-l">🔥 STREAK</div></div>
+    <div class="ms-stat"><div class="ms-stat-v" id="stat-played">0</div><div class="ms-stat-l">🎮 PLAYED</div></div>
+    <div class="ms-stat"><div class="ms-stat-v coin-v" id="stat-coins">0</div><div class="ms-stat-l">💰 COINS</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px;max-width:500px;width:100%">
+    <div id="ms-username-display" style="flex:1;padding:10px;background:var(--gl);border:2px solid var(--blk);border-radius:10px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;text-align:center;box-shadow:3px 3px 0 var(--blk);cursor:pointer" onclick="openUsernameEdit()">👤 <span id="ms-uname">Player</span></div>
+  </div>
+</div>
+
+<!-- DAILY MODAL -->
+<div id="daily-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-title">🌟 Daily Challenge</div>
+    <div id="daily-content"></div>
+    <button class="m-btn sec" onclick="document.getElementById('daily-modal').classList.remove('open')">← Back</button>
+  </div>
+</div>
+
+<!-- LEADERBOARD MODAL -->
+<div id="lb-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-title">🏆 Leaderboard</div>
+    <div id="lb-list"></div>
+    <button class="m-btn sec" onclick="document.getElementById('lb-modal').classList.remove('open')">← Back</button>
+  </div>
+</div>
+
+<!-- ONLINE MODAL -->
+<div id="online-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-title">🌐 Online Multiplayer</div>
+    <div class="tabs">
+      <button class="tab on" onclick="omTab('host',this)">HOST</button>
+      <button class="tab" onclick="omTab('join',this)">JOIN</button>
+    </div>
+    <div id="t-host" class="tsec on">
+      <div id="code-box"><div class="code" id="om-code">····</div><div class="sub">Share this 4-letter code</div></div>
+      <div id="om-stat" class="m-status">Generating code...</div>
+    </div>
+    <div id="t-join" class="tsec">
+      <input id="om-join-inp" class="m-input" type="text" maxlength="4" placeholder="CODE" oninput="this.value=this.value.toUpperCase()"/>
+      <button class="m-btn pri" onclick="joinOnline()">JOIN ROOM →</button>
+      <div id="om-join-stat" class="m-status"></div>
+    </div>
+    <button class="m-btn sec" onclick="closeOnline()">← Back</button>
+  </div>
+</div>
+
+<!-- PNP MODAL -->
+<div id="pnp-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-title">🤝 Pass & Play Setup</div>
+    <div class="pnp-row">
+      <input id="pnp-p1" class="m-input sm" type="text" placeholder="Player 1" value="Player 1" style="margin-bottom:0"/>
+      <input id="pnp-p2" class="m-input sm" type="text" placeholder="Player 2" value="Player 2" style="margin-bottom:0"/>
+    </div>
+    <button class="m-btn pri" onclick="startPnP()">START GAME →</button>
+    <button class="m-btn sec" onclick="document.getElementById('pnp-modal').classList.remove('open')">← Back</button>
+  </div>
+</div>
+
+<!-- ADMIN modals moved to admin panel only -->
+
+<!-- HEADER -->
+<div id="header">
+  <div id="logo" onclick="goHome()">Geo<span>Brain</span></div>
+  <div id="hdr-mid">
+    <div id="round-text">ROUND 1/10</div>
+    <span id="mode-badge">SOLO</span>
+  </div>
+  <div id="hdr-right">
+    <div id="coin-disp">💰 <span id="hdr-coins">0</span></div>
+    <div id="hearts"><span class="heart" id="h1">❤️</span><span class="heart" id="h2">❤️</span><span class="heart" id="h3">❤️</span><span class="heart" id="h4">❤️</span><span class="heart" id="h5">❤️</span></div>
+    <div id="score-disp">0 PTS</div>
+  </div>
+</div>
+
+<!-- MAIN GAME -->
+<div id="main">
+  <div id="map"></div>
+  <div id="timer-bar" style="transform:scaleX(1)"></div>
+
+  <!-- Clue card -->
+  <div id="clue-card">
+    <div id="clue-hdr">
+      <span id="clue-lbl">CLUE 1 — REGION</span>
+      <span id="clue-n">1/4</span>
+    </div>
+    <div id="clue-txt">Loading...</div>
+    <div id="clue-extra"></div>
+    <button id="hint-btn">🔍 Unlock Clue · <span id="hint-cost">💰30</span></button>
+  </div>
+
+  <!-- Guess tracker (top right on map) -->
+  <div id="guess-tracker">
+    <div id="gt-label">GUESSES</div>
+    <div id="gt-dots">
+      <div class="gt-dot current" id="gtd1"></div>
+      <div class="gt-dot" id="gtd2"></div>
+      <div class="gt-dot" id="gtd3"></div>
+      <div class="gt-dot" id="gtd4"></div>
+      <div class="gt-dot" id="gtd5"></div>
+    </div>
+    <div id="gt-sub">5 LEFT</div>
+  </div>
+
+  <!-- Wrong guess history panel (left side, desktop) -->
+  <div id="guess-history-panel">
+    <div id="ghp-label">WRONG GUESSES</div>
+    <div id="ghp-list"></div>
+  </div>
+
+  <div id="mobile-turn"></div>
+  <div id="turn-banner"><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:2px">NOW GUESSING</div><div id="turn-name">Player 1</div></div>
+  <div id="online-bar"><div class="ob-lbl">Opponent</div><div class="ob-peer"><span class="ob-dot"></span><span id="ob-name">Friend</span></div></div>
+  <div id="hist-tray"><div id="hist-lbl">This Round</div><div id="hist-list"></div></div>
+  <div id="ai-badge">🤖 AI thinking...</div>
+  <div id="streak-toast"></div>
+  <div id="coin-pop">💰 +0</div>
+
+  <div id="search-panel">
+    <div id="search-wrap">
+      <div style="position:relative">
+        <div id="ac-list"></div>
+        <div id="search-row">
+          <input id="guess-input" type="text" placeholder="Type a country..." autocomplete="off" spellcheck="false" inputmode="search" enterkeyhint="go"/>
+          <button id="guess-btn">GUESS →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HANDOFF -->
+<div id="handoff">
+  <div id="ho-emoji">📱</div>
+  <div id="ho-title">Pass to next player!</div>
+  <div id="ho-sub"></div>
+  <div id="ho-scores"></div>
+  <button id="ho-btn">I'M READY →</button>
+</div>
+
+<!-- RESULT -->
+<div id="result">
+  <div id="rc">
+    <img id="r-flag-img" src="" alt="flag"/>
+    <div id="r-flag-emoji"></div>
+    <div id="r-title"></div>
+    <div id="r-sub"></div>
+    <div id="r-dist"></div>
+    <div id="r-guesses"></div>
+    <div id="r-coins-earned"></div>
+    <div id="r-facts"></div>
+    <div id="r-scores"></div>
+    <button id="r-next">NEXT ROUND →</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover">
+  <div id="gc">
+    <div id="go-emo">🧠</div>
+    <div id="go-ttl">GAME OVER</div>
+    <div id="go-scores"></div>
+    <div id="go-win"></div>
+    <div id="go-sb"></div>
+    <button id="go-btn" onclick="goHome()">← MAIN MENU</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CLUES DATABASE
+// ══════════════════════════════════════════════════════
+const CLUE_DB = {
+  "Afghanistan":["Landlocked nation in Central/South Asia","Rugged Hindu Kush mountains; no coast","Ancient Silk Road crossroads; decades of conflict","Famous for pomegranates and the sport of buzkashi"],
+  "Albania":["Small Balkan country on the Adriatic Sea","Alps in the north, sunny coast in the south","Former communist state; now EU candidate","'Land of Eagles'; Mother Teresa was born here"],
+  "Algeria":["Largest country in Africa by area","Sahara Desert covers most of the south","Former French colony; gained independence 1962","Top natural gas exporter in Africa"],
+  "Argentina":["Second-largest country in South America","Andes in west; vast Pampas grasslands","World-class tango, Patagonia, and wine","Five-time FIFA World Cup winners"],
+  "Australia":["World's largest island and smallest continent","Great Barrier Reef; vast red Outback","Commonwealth realm; leading wool exporter","Home to kangaroos, koalas, and platypuses"],
+  "Austria":["Landlocked country in Central Europe","Alpine country bordering 8 nations","Birthplace of Mozart and Sigmund Freud","Capital is one of Europe's cultural capitals"],
+  "Bangladesh":["Located in South Asia, mostly river delta","Most densely populated large country on Earth","Formerly East Pakistan; independence in 1971","World's largest mangrove forest (Sundarbans)"],
+  "Belgium":["Small Western European nation","Flat lowlands and forests in the Ardennes","Home of NATO and EU headquarters","Famous for waffles, chocolate, and 1,000+ beers"],
+  "Bolivia":["Landlocked country in South America","Home to the world's highest navigable lake (Titicaca)","La Paz is one of the world's highest capital cities","World's largest salt flat: Salar de Uyuni"],
+  "Brazil":["Largest country in South America","Amazon Rainforest covers over half","World's top coffee and sugarcane producer","Home of Carnival, football, and samba"],
+  "Canada":["Second-largest country in the world","Vast boreal forests, tundra, Rocky Mountains","Bilingual: English and French official languages","Maple syrup superpower; Niagara Falls"],
+  "Chile":["World's longest and narrowest country at 4,300km","Pacific coast to west; Andes to east","Atacama Desert is Earth's driest non-polar desert","World's top copper producer"],
+  "China":["Most populous nation on Earth","Great Wall, Himalayas, and Yangtze River","Oldest continuous civilisation; invented paper","World's largest exporter; capital Beijing"],
+  "Colombia":["Only South American country with 2 coasts","Three Andean cordilleras run through it","World's top emerald and premium coffee producer","García Márquez's homeland; capital Bogotá"],
+  "Cuba":["Island nation in the Caribbean Sea","Largest island in the Caribbean","One-party socialist republic since 1959","Famous for cigars, rum, classic cars, and salsa"],
+  "Czech Republic":["Landlocked country in Central Europe","Bohemia and Moravia are its main regions","Former part of Czechoslovakia; split in 1993","World's highest beer consumption per capita"],
+  "Denmark":["Scandinavian country and peninsula","Greenland and Faroe Islands are territories","Constitutional monarchy; very high happiness ranking","Birthplace of LEGO and Hans Christian Andersen"],
+  "Egypt":["North Africa; gateway between continents","Nile River — world's longest — flows through it","Home to the Great Pyramids and the Sphinx","One of humanity's oldest civilisations"],
+  "Ethiopia":["Horn of Africa; Africa's oldest nation","Source of the Blue Nile; vast highland plateau","Only African nation never colonised (briefly by Italy)","Birthplace of coffee; Addis Ababa hosts African Union"],
+  "Finland":["Nordic nation in Northern Europe","Thousands of lakes; shares long border with Russia","One of the world's happiest and most educated nations","Land of Nokia, saunas, and the midnight sun"],
+  "France":["Largest country in Western Europe","Bordered by 8 countries and two seas","World's most visited tourist destination","Premier wine, cheese, and fashion powerhouse"],
+  "Germany":["Most populous EU country","Rhine, Danube, Black Forest, Bavarian Alps","Birthplace of Beethoven, Goethe, and the printing press","Oktoberfest, the world's largest beer festival"],
+  "Ghana":["West African nation on Gulf of Guinea","Tropical forest in south; savanna in north","First sub-Saharan country to gain independence (1957)","World's second-largest cocoa producer"],
+  "Greece":["Southern Europe with 6,000+ islands","Mediterranean climate; Mount Olympus","Cradle of Western civilisation and democracy","World's largest merchant shipping fleet"],
+  "Hungary":["Landlocked country in Central Europe","Great Plain (Puszta) dominates the east","Budapest split by the Danube River","Famous for paprika, goulash, and thermal baths"],
+  "Iceland":["North Atlantic island near the Arctic Circle","Most volcanically active country on Earth","World's oldest parliament (Althing, 930 AD)","Almost entirely on renewable geothermal energy"],
+  "India":["Most populous country; South Asia","Himalayan peaks north; tropical coast south","Birthplace of Hinduism, Buddhism, and yoga","World's largest democracy; capital New Delhi"],
+  "Indonesia":["World's largest archipelago; 17,000+ islands","Straddles the equator in Southeast Asia","Fourth most populous country","Largest Muslim-majority nation by population"],
+  "Iran":["Middle East and Central Asia crossroads","Vast plateau ringed by mountain ranges","Ancient Persian Empire; Persepolis ruins","World's top saffron producer; capital Tehran"],
+  "Iraq":["Middle Eastern nation in Mesopotamia","Tigris and Euphrates rivers run through it","Birthplace of writing and ancient Babylon","Vast oil reserves; Shia Muslim majority"],
+  "Ireland":["Island nation west of Great Britain","'Emerald Isle'; famous green rolling hills","Celtic culture; 40M+ worldwide claim Irish descent","Birthplace of Guinness, Wilde, and Joyce"],
+  "Israel":["Middle Eastern nation on Mediterranean coast","Smaller than New Jersey; borders 4 countries","Ancient religious sites for 3 Abrahamic faiths","Start-up Nation; home to the Dead Sea"],
+  "Italy":["Boot-shaped peninsula in Southern Europe","Alps in north; Mediterranean coast all around","Rome, Venice, Florence, and Vatican City","Top olive oil producer; birthplace of the Renaissance"],
+  "Japan":["Pacific island nation east of Korea","Four main islands; 100+ active volcanoes","Constitutional monarchy; world's 4th-largest economy","Birthplace of anime, sushi, and the bullet train"],
+  "Jordan":["Middle Eastern nation bordering Israel, Syria, Iraq","Land of ancient Petra and Wadi Rum desert","Constitutional monarchy; host to many refugees","Dead Sea shoreline — world's lowest point on land"],
+  "Kazakhstan":["World's largest landlocked country","Vast steppes; Aral Sea is shrinking here","Former Soviet republic; rich in oil and uranium","First country to willingly give up nuclear weapons"],
+  "Kenya":["East Africa; straddles the equator","Great Rift Valley; home to Mount Kenya","Famous for Maasai Mara and wildebeest migration","World's top tea exporter; 'Silicon Savannah'"],
+  "Madagascar":["Large island off southeast Africa","Fourth-largest island in the world","90%+ of wildlife found nowhere else on Earth","Lemurs; vanilla and cloves are top exports"],
+  "Malaysia":["Southeast Asia; two main regions split by sea","Tropical rainforests; world's tallest twin towers","Constitutional monarchy; multiethnic nation","Major palm oil producer; capital is Kuala Lumpur"],
+  "Mexico":["North America, south of the USA","Sierra Madre ranges; desert to jungle diversity","Aztec and Mayan civilisation birthplace","World's largest Spanish-speaking country"],
+  "Mongolia":["Landlocked between Russia and China","World's most sparsely populated sovereign country","Vast Gobi Desert; open steppe grasslands","Genghis Khan's homeland; nomadic herding culture"],
+  "Morocco":["Northwest Africa on Strait of Gibraltar","Atlas Mountains separate Sahara from coast","Ancient medinas; gateway between Africa and Europe","World's largest phosphate reserves"],
+  "Mozambique":["Southeast Africa on Indian Ocean","Zambezi River in the north; very long coastline","Portuguese official language; former colony","One of the world's poorest but fastest-growing economies"],
+  "Myanmar":["Southeast Asia, between India and Thailand","Irrawaddy River; Himalayan foothills in north","Military junta; former name was Burma","World's largest ruby producer; Shwedagon Pagoda"],
+  "Nepal":["South Asia between India and China","8 of world's 10 tallest mountains including Everest","Deep Hindu and Buddhist culture","Birthplace of Siddhartha Gautama (the Buddha)"],
+  "Netherlands":["Northwestern Europe; much land reclaimed from sea","Famous dykes, windmills, and tulip fields","Birthplace of Rembrandt and Van Gogh","World's top flower exporter; capital Amsterdam"],
+  "New Zealand":["Oceania; two main islands in Pacific","First country to give women the vote (1893)","Maori culture; All Blacks rugby team","Location of The Lord of the Rings filming"],
+  "Nigeria":["Africa's most populous; 220M+ people","Niger Delta; one of world's largest river deltas","Largest economy in Africa; major oil exporter","Nollywood: world's 2nd-largest film industry"],
+  "Norway":["Western Scandinavian peninsula","Dramatic fjords carved by ancient glaciers","One of world's happiest countries","World's largest sovereign wealth fund"],
+  "Pakistan":["South Asia; borders India, Afghanistan, Iran, China","K2 — world's second-highest mountain — is here","World's first Islamic republic (1947)","Ancient Indus Valley Civilisation (Mohenjo-daro)"],
+  "Peru":["Western South America on Pacific coast","Andes Mountains and Amazon rainforest","Birthplace of the Inca Empire; Machu Picchu","World's top asparagus and fishmeal producer"],
+  "Philippines":["SE Asia; 7,600+ islands in the Pacific","Pacific Ring of Fire; typhoon-prone","Only predominantly Christian nation in Asia","World's largest exporter of nurses"],
+  "Poland":["Central Europe on North European Plain","Few natural barriers; often invaded in history","Largest Central European economy; EU since 2004","Birthplace of Copernicus, Curie, and Chopin"],
+  "Portugal":["Westernmost country in continental Europe","Atlantic coastline 1,794km long","Former global maritime empire","Famous for fado, port wine, and pastéis de nata"],
+  "Romania":["Southeastern Europe; Carpathian mountains","Danube River forms southern border","Birthplace of Dracula legend (Transylvania)","Largest country in the Balkans"],
+  "Russia":["World's largest country; 11 time zones","Baltic Sea to Pacific Ocean; vast taiga forests","Permanent UN Security Council member","Birthplace of Tolstoy, Dostoevsky, and Gagarin"],
+  "Saudi Arabia":["Largest country in the Middle East","Home to Mecca and Medina — holiest Islamic sites","World's largest proven oil reserves","Absolute monarchy; capital Riyadh"],
+  "South Africa":["Southernmost country in Africa; 3 capital cities","Cape of Good Hope; Atlantic meets Indian Ocean","11 official languages; apartheid ended 1994","World's top platinum and chrome producer"],
+  "South Korea":["East Asia; southern Korean Peninsula","Mountainous; Han River through Seoul","War-torn to global tech powerhouse","K-pop, K-drama, and kimchi went global"],
+  "Spain":["Second-largest EU country","Pyrenees north; Mediterranean and Atlantic coasts","World's 2nd most spoken native language (Spanish)","Birthplace of flamenco, tapas, and Picasso"],
+  "Sri Lanka":["Island nation south of India","Tropical island in the Indian Ocean","Known as the Pearl of the Indian Ocean","World's top cinnamon producer; tea famous"],
+  "Sudan":["Northeast Africa; third-largest in Africa","Nile River runs through it; vast desert","Recently split: South Sudan became independent 2011","Ancient Nubian pyramids; Khartoum is the capital"],
+  "Sweden":["Largest Scandinavian country","Norway west; Finland northeast","Home to IKEA, Spotify, Volvo, and Nobel Prize","Land of midnight sun and Northern Lights"],
+  "Switzerland":["Small landlocked Central European country","Surrounded by 5 countries; Alps dominate","Permanently neutral; hosts UN and Red Cross","Famous for watches, chocolate, banking, and skiing"],
+  "Tanzania":["East Africa; Indian Ocean coast","Mount Kilimanjaro — Africa's highest — is here","Serengeti National Park and Zanzibar spice islands","Official languages: Swahili and English"],
+  "Thailand":["Southeast Asia; never colonised","Kingdom; tropical beaches and Buddhist temples","World's top rice and rubber exporter","Famous for street food, Muay Thai, and Songkran festival"],
+  "Turkey":["Transcontinental; spans Europe and Asia","Surrounded by 8 countries and 4 seas","Birthplace of Troy, Byzantine, and Ottoman Empires","World's largest hazelnut producer; capital Ankara"],
+  "Uganda":["East Africa; landlocked","Equator runs through it; source of the Nile","Mountain gorillas live here; Pearl of Africa","Youngest population of any country on Earth"],
+  "Ukraine":["Largest country entirely in Europe","Vast steppes; long Black Sea coastline","Breadbasket of Europe; top wheat exporter","Kyiv founded in the 5th century; one of Europe's oldest cities"],
+  "United Arab Emirates":["Small nation on Arabian Peninsula","Desert nation; world's tallest building (Burj Khalifa)","Major oil exporter; now diversified into tourism","Dubai and Abu Dhabi are global cities"],
+  "United Kingdom":["Island nation off northwest coast of Europe","England, Scotland, Wales, Northern Ireland","Led the Industrial Revolution; built world's largest empire","Home of Shakespeare, Newton, Darwin, and the Beatles"],
+  "United States":["Third-largest by area and population","Rockies, Great Plains, Appalachians, two ocean coasts","World's largest economy and military spender","Birthplace of jazz, Hollywood, internet, and moon landing"],
+  "Uzbekistan":["Doubly landlocked in Central Asia","Ancient Silk Road cities: Samarkand, Bukhara","World's 2nd-largest cotton exporter","Former Soviet republic; capital Tashkent"],
+  "Venezuela":["Northern South America on Caribbean coast","Amazon jungle south; Andes west; Angel Falls","World's largest proven oil reserves","Economic crisis has driven millions to emigrate"],
+  "Vietnam":["SE Asia; S-shaped on South China Sea","Mekong Delta south; Red River Delta north","One-party socialist republic; fast-growing economy","Famous for pho, bánh mì, and Ha Long Bay"],
+  "Zimbabwe":["Southern Africa; landlocked","Victoria Falls on Zambia border","Once called the 'breadbasket of Africa'","Ancient Great Zimbabwe ruins gave the nation its name"],
+};
+
+// ══════════════════════════════════════════════════════
+// GLOBALS
+// ══════════════════════════════════════════════════════
+let COUNTRIES = [];
+let MODE = 'solo';
+
+// Load admin settings from localStorage (shared with admin panel)
+function loadADM(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('gb_adm')||'{}');
+    return Object.assign({rounds:10,timer:false,timerSecs:60,diff:'medium',facts:true,confetti:true,aiDiff:'medium',clueCost:30,maxGuesses:5,proximity:true,repeats:false,startCoins:100,aiDelay:'medium'},saved);
+  }catch{ return {rounds:10,timer:false,timerSecs:60,diff:'medium',facts:true,confetti:true,aiDiff:'medium',clueCost:30,maxGuesses:5,proximity:true,repeats:false,startCoins:100,aiDelay:'medium'} }
+}
+let ADM = loadADM();
+// G.guessCount = how many guesses used this round (max 5)
+// G.roundGuesses = array of {country, dist, ok} for this round
+let G = {
+  hearts:5, round:1, totalRounds:10, cur:null, clueIdx:0, used:[], mkrs:[], guessed:false,
+  guessCount:0, roundGuesses:[],
+  players:[{name:'You',score:0}], curP:0, peer:null, conn:null,
+  isHost:false, oppName:'Opponent', oppScore:0, oppGuessed:false,
+  streak:0, timerInt:null, _lg:null,_ld:0,_lc:false,_lp:0
+};
+let LS_SCORES = JSON.parse(localStorage.getItem('gb_scores')||'[]');
+let LS_STATS  = JSON.parse(localStorage.getItem('gb_stats')||'{"played":0,"best":0,"streak":0}');
+// Coins stored separately so admin panel can easily manage them
+function getCoins(){
+  const c = parseInt(localStorage.getItem('gb_coins'));
+  if(!isNaN(c)) return c;
+  return LS_STATS.coins || 100;
+}
+function saveCoins(n){ localStorage.setItem('gb_coins', Math.max(0,n)); }
+const CT = ['REGION','GEOGRAPHY','ECONOMY / HISTORY','CULTURE'];
+
+function addCoins(n){
+  const cur = getCoins();
+  saveCoins(cur + n);
+  updCoinDisplay();
+  if(n > 0) showCoinPop('+'+n);
+}
+function spendCoins(n){
+  const cur = getCoins();
+  if(cur < n) return false;
+  saveCoins(cur - n);
+  updCoinDisplay();
+  return true;
+}
+function updCoinDisplay(){
+  document.getElementById('hdr-coins').textContent = getCoins();
+  const sv = document.getElementById('stat-coins');
+  if(sv) sv.textContent = getCoins();
+}
+function saveStatsLS(){ localStorage.setItem('gb_stats', JSON.stringify(LS_STATS)); }
+
+// ══════════════════════════════════════════════════════
+// FLAG IMAGE URL (using flagcdn)
+// ══════════════════════════════════════════════════════
+function getFlagUrl(country){
+  if(country && country.cca2) return `https://flagcdn.com/w80/${country.cca2.toLowerCase()}.png`;
+  // fallback: try to find by name
+  const c = COUNTRIES.find(x=>x.name===country||x===country);
+  if(c && c.cca2) return `https://flagcdn.com/w80/${c.cca2.toLowerCase()}.png`;
+  return '';
+}
+function flagImg(cca2, cls=''){
+  if(!cca2) return '';
+  return `<img src="https://flagcdn.com/w80/${cca2.toLowerCase()}.png" class="${cls}" onerror="this.style.display='none'" alt="flag">`;
+}
+
+// ══════════════════════════════════════════════════════
+// COMPASS DIRECTION (from world centre [0,0] or from player location)
+// We calculate compass from map centre or from a reference point
+// ══════════════════════════════════════════════════════
+function compassDir(lat, lng) {
+  // From map centre (roughly equator/prime meridian)
+  const refLat = 20, refLng = 10;
+  const dlat = lat - refLat;
+  const dlng = lng - refLng;
+  const angle = Math.atan2(dlng, dlat) * 180 / Math.PI;
+  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  const idx = Math.round((angle + 360) % 360 / 45) % 8;
+  return dirs[idx];
+}
+
+// ══════════════════════════════════════════════════════
+// KEBAB MENU
+// ══════════════════════════════════════════════════════
+function toggleKebab(){ document.getElementById('kebab-menu').classList.toggle('open') }
+function closeKebab(){ document.getElementById('kebab-menu').classList.remove('open') }
+window.addEventListener('click', e=>{ if(!e.target.closest('#kebab-wrap')) closeKebab() });
+function syncKebab(){
+  const ms = document.getElementById('mode-screen');
+  document.getElementById('kebab-wrap').style.display = ms.classList.contains('hidden') ? 'none' : 'block';
+}
+
+// ══════════════════════════════════════════════════════
+// MAP
+// ══════════════════════════════════════════════════════
+const map = L.map('map',{center:[20,10],zoom:2,zoomControl:true,attributionControl:false});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+function mkIcon(cca2, emoji, color){
+  const inner = cca2
+    ? `<img src="https://flagcdn.com/w40/${cca2.toLowerCase()}.png" style="width:20px;height:14px;object-fit:cover;border-radius:2px;border:1px solid rgba(0,0,0,0.3)" onerror="this.style.display='none'">`
+    : `<span style="transform:rotate(45deg);font-size:13px;display:block">${emoji||'📍'}</span>`;
+  return L.divIcon({
+    html:`<div style="width:32px;height:32px;background:${color};border:3px solid #1a1a1a;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:4px 4px 0 #1a1a1a">${inner}</div>`,
+    className:'',iconSize:[32,32],iconAnchor:[16,32]
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// LOAD COUNTRIES
+// ══════════════════════════════════════════════════════
+async function loadCountries(){
+  document.getElementById('load-status').textContent = 'Fetching countries...';
+  try {
+    const res = await fetch('https://restcountries.com/v3.1/all?fields=name,flags,latlng,region,subregion,population,languages,capital,area,cca2');
+    const data = await res.json();
+    COUNTRIES = data
+      .filter(c => c.latlng && c.latlng.length===2 && c.name && c.name.common)
+      .map(c => {
+        const name = c.name.common;
+        const clues = CLUE_DB[name] || [
+          `Located in ${c.subregion||c.region||'the world'}`,
+          `Area: ~${c.area?Math.round(c.area/1000)+'k km²':'unknown'}; Capital: ${c.capital?.[0]||'unknown'}`,
+          `Population: ~${c.population?(c.population/1e6).toFixed(1)+'M':'unknown'}`,
+          `Languages: ${c.languages?Object.values(c.languages).slice(0,3).join(', '):'various'}`
+        ];
+        return {
+          name, flag: c.flags?.emoji||'🏳️',
+          cca2: c.cca2||'',
+          flagUrl: c.cca2?`https://flagcdn.com/w80/${c.cca2.toLowerCase()}.png`:'',
+          lat: c.latlng[0], lng: c.latlng[1],
+          region: c.region, subregion: c.subregion,
+          capital: c.capital?.[0]||'?',
+          pop: c.population, area: c.area,
+          langs: c.languages?Object.values(c.languages).join(', '):'?',
+          clues
+        };
+      })
+      .sort((a,b)=>a.name.localeCompare(b.name));
+    document.getElementById('load-status').textContent = `${COUNTRIES.length} countries loaded!`;
+  } catch(e) {
+    document.getElementById('load-status').textContent = 'Using built-in data...';
+    COUNTRIES = Object.entries(CLUE_DB).map(([name,clues])=>({
+      name,flag:'🌍',cca2:'',flagUrl:'',lat:0,lng:0,region:'?',subregion:'?',capital:'?',pop:0,area:0,langs:'?',clues
+    }));
+  }
+  setTimeout(()=>{
+    document.getElementById('loader').classList.add('done');
+    setTimeout(()=>{
+      document.getElementById('loader').style.display='none';
+      document.getElementById('mode-screen').classList.remove('hidden');
+      loadStats(); syncKebab();
+      checkUsername();
+    },800);
+  },500);
+}
+
+// ══════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════
+function loadStats(){
+  document.getElementById('stat-played').textContent  = LS_STATS.played||0;
+  document.getElementById('stat-streak').textContent  = LS_STATS.streak||0;
+  updCoinDisplay();
+}
+function saveStats(score){
+  LS_STATS.played = (LS_STATS.played||0)+1;
+  if(score>( LS_STATS.best||0)) LS_STATS.best=score;
+  saveStatsLS();
+}
+function saveScore(name,score){
+  const uname = getUsername() || name || 'You';
+  LS_SCORES.push({name:uname,score,date:new Date().toLocaleDateString()});
+  LS_SCORES.sort((a,b)=>b.score-a.score);
+  if(LS_SCORES.length>20) LS_SCORES=LS_SCORES.slice(0,20);
+  localStorage.setItem('gb_scores',JSON.stringify(LS_SCORES));
+}
+
+// ══════════════════════════════════════════════════════
+// DAILY CHALLENGE
+// ══════════════════════════════════════════════════════
+function getDailyCountry(){
+  if(!COUNTRIES.length) return null;
+  // Check admin override first
+  const override = localStorage.getItem('gb_daily_override');
+  if(override){
+    const found = COUNTRIES.find(c=>c.name.toLowerCase()===override.toLowerCase());
+    if(found) return found;
+  }
+  const d=new Date();
+  const seed=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+  return COUNTRIES[seed % COUNTRIES.length];
+}
+function getTodayKey(){ const d=new Date(); return `gb_daily_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`; }
+
+function openDaily(){
+  closeKebab();
+  const done = localStorage.getItem(getTodayKey());
+  const dc = document.getElementById('daily-content');
+  if(done){
+    const saved = JSON.parse(done);
+    const c = COUNTRIES.find(x=>x.name===saved.country) || {name:saved.country,cca2:'',flag:'🌍'};
+    // build guess trail
+    let trailHtml = '';
+    if(saved.guesses && saved.guesses.length){
+      trailHtml = '<div class="daily-guess-trail">';
+      saved.guesses.forEach(g=>{
+        const gc = COUNTRIES.find(x=>x.name===g.name)||{name:g.name,cca2:'',flag:'🌍'};
+        const cls = g.ok?'dgt-ok':g.dist<1000?'dgt-c':'dgt-w';
+        const fi = gc.cca2?`<img src="https://flagcdn.com/w40/${gc.cca2.toLowerCase()}.png" class="dgt-flag" onerror="this.style.display='none'">`:'';
+        trailHtml += `<div class="dgt-row ${cls}">${fi}<span class="dgt-name">${g.name}</span><span class="dgt-dist">${g.ok?'✅ CORRECT':fmt(g.dist)}</span></div>`;
+      });
+      trailHtml += '</div>';
+    }
+    const fi = c.cca2?`<img src="https://flagcdn.com/w160/${c.cca2.toLowerCase()}.png" class="daily-done-flag" onerror="this.style.display='none'">` : `<div style="font-size:40px;margin-bottom:8px">${c.flag}</div>`;
+    dc.innerHTML = `
+      <div style="text-align:center;margin-bottom:10px">
+        <div style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--green);letter-spacing:2px;margin-bottom:8px">✅ COMPLETED TODAY</div>
+        ${fi}
+        <div style="font-family:'Space Mono',monospace;font-size:16px;font-weight:700;margin-bottom:4px">${saved.country}</div>
+        <div class="daily-done-score">${saved.score.toLocaleString()} pts</div>
+        <div class="daily-done-label">Your score · ${saved.guesses?.length||'?'} guess${saved.guesses?.length!==1?'es':''}</div>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#888;text-transform:uppercase;margin-bottom:4px">Your Guesses</div>
+      ${trailHtml}
+      <p style="font-size:11px;color:#888;font-weight:700;text-align:center;margin-top:10px">Come back tomorrow for a new challenge! 🌍</p>
+    `;
+  } else {
+    dc.innerHTML = `
+      <div style="background:var(--gl);border:2px solid var(--blk);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🌟</div>
+        <div style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-bottom:4px">5 GUESSES</div>
+        <div style="font-size:12px;color:#666;font-weight:700">Same country as everyone worldwide. Use clues wisely — each one costs coins!</div>
+      </div>
+      <button class="m-btn pri" onclick="startDaily()">PLAY DAILY →</button>
+    `;
+  }
+  document.getElementById('daily-modal').classList.add('open');
+}
+
+function startDaily(){
+  document.getElementById('daily-modal').classList.remove('open');
+  const dc = getDailyCountry();
+  if(!dc){ alert('Countries still loading, try again!'); return; }
+  MODE='daily';
+  document.getElementById('mode-screen').classList.add('hidden');
+  document.getElementById('mode-badge').textContent='DAILY';
+  syncKebab();
+  G = {hearts:5,round:1,totalRounds:1,cur:dc,clueIdx:0,used:[dc.name],mkrs:[],guessed:false,
+    guessCount:0,roundGuesses:[],
+    players:[{name:'You',score:0}],curP:0,peer:null,conn:null,
+    isHost:false,oppName:'',oppScore:0,oppGuessed:false,
+    streak:0,timerInt:null,_lg:null,_ld:0,_lc:false,_lp:0};
+  updH(); updClue(); updGuessTracker();
+  document.getElementById('round-text').textContent='DAILY CHALLENGE';
+  document.getElementById('guess-input').value='';
+  document.getElementById('hist-list').innerHTML='';
+  document.getElementById('ghp-list').innerHTML='';
+  document.getElementById('guess-history-panel').style.display='none';
+  G.mkrs.forEach(m=>map.removeLayer(m)); G.mkrs=[];
+  map.setView([20,10],2);
+  setTimeout(()=>map.invalidateSize(),100);
+}
+
+// ══════════════════════════════════════════════════════
+// LEADERBOARD
+// ══════════════════════════════════════════════════════
+function openLB(){
+  closeKebab();
+  const list = document.getElementById('lb-list');
+  if(!LS_SCORES.length){
+    list.innerHTML='<p style="text-align:center;font-size:13px;color:#888;padding:16px">No scores yet — play a game!</p>';
+  } else {
+    list.innerHTML = LS_SCORES.slice(0,10).map((s,i)=>`
+      <div class="lb-row${i===0?' gold':''}">
+        <span class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</span>
+        <span class="lb-name">${s.name}</span>
+        <span class="lb-score">${s.score.toLocaleString()}</span>
+        <span class="lb-date">${s.date}</span>
+      </div>`).join('');
+  }
+  document.getElementById('lb-modal').classList.add('open');
+}
+
+// ══════════════════════════════════════════════════════
+// GUESS TRACKER UI
+// ══════════════════════════════════════════════════════
+function updGuessTracker(){
+  const maxG = 5;
+  const used = G.guessCount;
+  const left = maxG - used;
+  for(let i=1;i<=maxG;i++){
+    const d = document.getElementById('gtd'+i);
+    if(!d) continue;
+    d.classList.remove('wrong','close','correct','current');
+    const g = G.roundGuesses[i-1];
+    if(g){
+      if(g.ok) d.classList.add('correct');
+      else if(g.dist < 1000) d.classList.add('close');
+      else d.classList.add('wrong');
+    } else if(i === used+1){
+      d.classList.add('current');
+    }
+  }
+  const sub = document.getElementById('gt-sub');
+  if(sub) sub.textContent = left===0 ? 'DONE' : `${left} LEFT`;
+}
+
+// ══════════════════════════════════════════════════════
+// WRONG GUESS HISTORY PANEL (left side desktop)
+// ══════════════════════════════════════════════════════
+function addGuessHistPanel(country, dist, ok){
+  const panel = document.getElementById('guess-history-panel');
+  const list  = document.getElementById('ghp-list');
+  if(!G.roundGuesses.length || ok) return;
+  panel.style.display = 'block';
+  const cls = dist<1000?'close-g':'wrong-g';
+  const fi = country.cca2?`<img src="https://flagcdn.com/w40/${country.cca2.toLowerCase()}.png" class="ghp-flag-img" onerror="this.style.display='none'">`:
+    `<span style="font-size:16px">${country.flag}</span>`;
+  const row = document.createElement('div');
+  row.className=`ghp-row ${cls}`;
+  row.innerHTML=`${fi}<span class="ghp-name">${country.name}</span><span class="ghp-dist">${fmt(dist)}</span>`;
+  list.appendChild(row);
+}
+
+// ══════════════════════════════════════════════════════
+// MODE SELECT
+// ══════════════════════════════════════════════════════
+function startMode(m){
+  MODE=m;
+  const uname = getUsername() || 'You';
+  document.getElementById('mode-screen').classList.add('hidden');
+  syncKebab();
+  document.getElementById('mode-badge').textContent=m==='solo'?'SOLO':m==='ai'?'VS AI':m==='pnp'?'PASS & PLAY':'ONLINE';
+  G={hearts:5,round:1,totalRounds:ADM.rounds,cur:null,clueIdx:0,used:[],mkrs:[],guessed:false,
+    guessCount:0,roundGuesses:[],
+    players:m==='pnp'?[...G.players]:[{name:uname,score:0}],curP:0,
+    peer:G.peer,conn:G.conn,isHost:G.isHost,oppName:G.oppName,oppScore:0,oppGuessed:false,
+    streak:0,timerInt:null,_lg:null,_ld:0,_lc:false,_lp:0};
+  if(m==='ai') G.players=[{name:uname,score:0},{name:'🤖 AI',score:0}];
+  updH(); newRound();
+  setTimeout(()=>map.invalidateSize(),100);
+}
+function openPnP(){ document.getElementById('pnp-modal').classList.add('open') }
+function startPnP(){
+  const p1=document.getElementById('pnp-p1').value||'Player 1';
+  const p2=document.getElementById('pnp-p2').value||'Player 2';
+  G.players=[{name:p1,score:0},{name:p2,score:0}];
+  document.getElementById('pnp-modal').classList.remove('open');
+  startMode('pnp');
+}
+function goHome(){ if(G.peer)try{G.peer.destroy()}catch(e){} location.reload() }
+
+// ══════════════════════════════════════════════════════
+// USERNAME SYSTEM
+// ══════════════════════════════════════════════════════
+function getUsername(){ return localStorage.getItem('gb_username') || '' }
+function setUsername(n){ localStorage.setItem('gb_username', n.trim().slice(0,20)); }
+
+function checkUsername(){
+  const un = getUsername();
+  if(!un){
+    // Show username modal on first load
+    document.getElementById('username-modal').classList.remove('hidden');
+    document.getElementById('un-welcome').textContent = 'First time? Set your name to track scores!';
+    setTimeout(()=>document.getElementById('un-input').focus(),100);
+  } else {
+    updateUsernameDisplay(un);
+    // Update player name
+    if(G && G.players && G.players[0]) G.players[0].name = un;
+  }
+}
+function saveUsername(){
+  const val = document.getElementById('un-input').value.trim();
+  if(!val){ 
+    document.getElementById('un-input').classList.add('shake');
+    setTimeout(()=>document.getElementById('un-input').classList.remove('shake'),400);
+    return;
+  }
+  setUsername(val);
+  document.getElementById('username-modal').classList.add('hidden');
+  document.getElementById('un-input').value='';
+  updateUsernameDisplay(val);
+  if(G && G.players && G.players[0]) G.players[0].name = val;
+}
+function openUsernameEdit(){
+  closeKebab();
+  const un = getUsername();
+  document.getElementById('un-input').value = un;
+  document.getElementById('un-welcome').textContent = un ? `Currently: ${un}` : '';
+  document.getElementById('username-modal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('un-input').focus(),100);
+}
+function updateUsernameDisplay(name){
+  const el = document.getElementById('ms-uname');
+  if(el) el.textContent = name || 'Player';
+}
+document.getElementById('un-input').addEventListener('keydown',e=>{ if(e.key==='Enter') saveUsername() });
+document.getElementById('username-modal').addEventListener('click', e=>{
+  if(e.target === document.getElementById('username-modal') && getUsername()){
+    document.getElementById('username-modal').classList.add('hidden');
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// ADMIN (stub — full admin in GeoBrain-Admin.html)
+// ══════════════════════════════════════════════════════
+function openAdminLogin(){ /* admin panel is in separate file */ }
+function checkAdminPw(){ /* stub */ }
+function openAdminPanel(){ /* stub */ }
+function applyAdmin(){ /* stub */ }
+function openAdminPanelPage(){
+  closeKebab();
+  window.open('GeoBrain-Admin.html','_blank');
+}
+function exportScores(){
+  const csv='Name,Score,Date\n'+LS_SCORES.map(s=>`${s.name},${s.score},${s.date}`).join('\n');
+  const a=document.createElement('a'); a.href='data:text/csv,'+encodeURIComponent(csv); a.download='geobrain_scores.csv'; a.click();
+}
+function resetAll(){
+  if(confirm('Reset all GeoBrain scores and stats?')){
+    const keys=[]; for(const k in localStorage){ if(k.startsWith('gb_')) keys.push(k); }
+    keys.forEach(k=>localStorage.removeItem(k));
+    location.reload();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// ONLINE (PeerJS)
+// ══════════════════════════════════════════════════════
+function openOnline(){ document.getElementById('online-modal').classList.add('open'); omTab('host',document.querySelector('.tab')); initHost() }
+function closeOnline(){ document.getElementById('online-modal').classList.remove('open'); if(G.peer)try{G.peer.destroy()}catch(e){} G.peer=null; G.conn=null }
+function omTab(t,el){ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); if(el)el.classList.add('on'); document.getElementById('t-host').classList.toggle('on',t==='host'); document.getElementById('t-join').classList.toggle('on',t==='join') }
+function randCode(){ return Math.random().toString(36).substr(2,4).toUpperCase() }
+function initHost(){
+  if(G.peer)try{G.peer.destroy()}catch(e){}
+  const code=randCode();
+  document.getElementById('om-code').textContent=code;
+  document.getElementById('om-stat').textContent='Waiting for opponent...';
+  try{
+    const peer=new Peer('gb-'+code); G.peer=peer; G.isHost=true;
+    peer.on('open',()=>{ document.getElementById('om-stat').textContent='Room ready — share the code!' });
+    peer.on('connection',conn=>{
+      G.conn=conn;
+      document.getElementById('om-stat').textContent='Connected! Starting...';
+      conn.on('data',onlineData); conn.on('close',()=>alert('Opponent disconnected'));
+      conn.send({type:'start'});
+      setTimeout(()=>{
+        document.getElementById('online-modal').classList.remove('open');
+        G.players=[{name:'You',score:0}]; G.oppScore=0; G.oppName='Friend';
+        document.getElementById('online-bar').classList.add('on');
+        document.getElementById('ob-name').textContent=G.oppName;
+        startMode('online');
+      },800);
+    });
+    peer.on('error',e=>document.getElementById('om-stat').textContent='Error: '+e.type);
+  }catch(e){ document.getElementById('om-stat').textContent='Connection unavailable — try offline modes' }
+}
+function joinOnline(){
+  const code=document.getElementById('om-join-inp').value.trim().toUpperCase();
+  if(code.length<4){ document.getElementById('om-join-stat').textContent='Enter a 4-letter code'; return }
+  document.getElementById('om-join-stat').textContent='Connecting...';
+  try{
+    const peer=new Peer(); G.peer=peer; G.isHost=false;
+    peer.on('open',()=>{
+      const conn=peer.connect('gb-'+code); G.conn=conn;
+      conn.on('open',()=>{ document.getElementById('om-join-stat').textContent='Connected!'; conn.on('data',onlineData) });
+      conn.on('error',()=>document.getElementById('om-join-stat').textContent='Failed to connect');
+    });
+    peer.on('error',e=>document.getElementById('om-join-stat').textContent='Error: '+e.type);
+  }catch(e){ document.getElementById('om-join-stat').textContent='Unavailable' }
+}
+function onlineData(d){
+  if(d.type==='start'&&!G.isHost){
+    document.getElementById('online-bar').classList.add('on');
+    document.getElementById('ob-name').textContent='Host';
+    document.getElementById('online-modal').classList.remove('open');
+    G.players=[{name:'You',score:0}]; G.oppScore=0; G.oppName='Host';
+    document.getElementById('mode-screen').classList.add('hidden'); syncKebab();
+    document.getElementById('mode-badge').textContent='ONLINE';
+    G.hearts=5; G.round=1; G.totalRounds=ADM.rounds; G.used=[]; G.mkrs=[]; updH();
+    setTimeout(()=>map.invalidateSize(),100);
+  }
+  if(d.type==='round'&&!G.isHost){
+    const c=COUNTRIES.find(x=>x.name===d.country);
+    if(c){ G.cur=c; G.clueIdx=0; G.guessed=false; G.guessCount=0; G.roundGuesses=[]; G.oppGuessed=false;
+      G.mkrs.forEach(m=>map.removeLayer(m)); G.mkrs=[];
+      document.getElementById('hist-list').innerHTML='';
+      updClue(); updGuessTracker();
+      document.getElementById('guess-input').value='';
+      document.getElementById('round-text').textContent=`ROUND ${G.round}/${G.totalRounds}`; }
+  }
+  if(d.type==='guess'){
+    G.oppScore+=d.pts||0; updScore();
+    const c=COUNTRIES.find(x=>x.name===d.country);
+    if(c&&G.cur){ const dist=hav(c.lat,c.lng,G.cur.lat,G.cur.lng);
+      const m=L.marker([c.lat,c.lng],{icon:mkIcon(c.cca2,'👤','#8b5cf6')}).addTo(map);
+      m.bindPopup(`<b>👤 ${G.oppName}: ${c.name}</b><br/>${fmt(dist)} from target`); G.mkrs.push(m);
+      addHist(c,dist,G.oppName); }
+    G.oppGuessed=true; chkBoth();
+  }
+}
+function chkBoth(){ if(G.guessed&&G.oppGuessed) showResult(G._lg,G.cur,G._ld,G._lc,G._lp) }
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+function hav(la1,ln1,la2,ln2){ const R=6371,dL=(la2-la1)*Math.PI/180,dN=(ln2-ln1)*Math.PI/180; const a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dN/2)**2; return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)) }
+function shuf(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]] } return a }
+function fmt(d){ return d<1?'<1 km':Math.round(d).toLocaleString()+' km' }
+function updH(){ for(let i=1;i<=5;i++) document.getElementById('h'+i).classList.toggle('lost',i>G.hearts) }
+function updScore(){
+  const el=document.getElementById('score-disp');
+  if(MODE==='pnp') el.textContent=G.players.map(p=>p.score).join(' | ');
+  else if(MODE==='online') el.textContent=`${G.players[0].score} | ${G.oppScore}`;
+  else el.textContent=G.players[0].score+' PTS';
+}
+function diffMulti(){ return {easy:0.7,medium:1,hard:1.4,expert:2}[ADM.diff]||1 }
+function hintCost(){ return ADM.clueCost||30; }
+function updHintBtn(){
+  const btn=document.getElementById('hint-btn');
+  const cost=document.getElementById('hint-cost');
+  if(cost) cost.textContent=`💰${hintCost()}`;
+}
+
+// ══════════════════════════════════════════════════════
+// NEW ROUND
+// ══════════════════════════════════════════════════════
+function newRound(){
+  clearInterval(G.timerInt);
+  G.mkrs.forEach(m=>map.removeLayer(m)); G.mkrs=[];
+  G.guessed=false; G.oppGuessed=false; G.clueIdx=0;
+  G.guessCount=0; G.roundGuesses=[];
+  document.getElementById('hist-list').innerHTML='';
+  document.getElementById('ghp-list').innerHTML='';
+  document.getElementById('guess-history-panel').style.display='none';
+  document.getElementById('guess-input').value='';
+  document.getElementById('ac-list').innerHTML='';
+  document.getElementById('ac-list').classList.remove('open');
+  document.getElementById('r-facts').classList.remove('show');
+  document.getElementById('turn-banner').classList.remove('on');
+
+  if(MODE!=='daily'){
+    const avail=COUNTRIES.filter(c=>!G.used.includes(c.name)&&c.lat!==0);
+    if(!avail.length) G.used=[];
+    G.cur=shuf([...avail])[0]; G.used.push(G.cur.name);
+  }
+
+  updClue(); updGuessTracker(); updHintBtn();
+  document.getElementById('round-text').textContent = MODE==='daily'?'DAILY CHALLENGE':`ROUND ${G.round}/${G.totalRounds}`;
+  updScore();
+  document.getElementById('hint-btn').disabled=false;
+  map.setView([20,10],2);
+
+  if(MODE==='pnp'){
+    document.getElementById('turn-banner').classList.add('on');
+    document.getElementById('turn-name').textContent=G.players[G.curP].name;
+    document.getElementById('mobile-turn').textContent='🎮 '+G.players[G.curP].name+"'s turn";
+  }
+  if(MODE==='online'&&G.isHost&&G.conn) G.conn.send({type:'round',country:G.cur.name});
+  if(MODE==='ai') setTimeout(doAI,{easy:4000,medium:2500,hard:1500,unbeatable:800}[ADM.aiDiff]||2500);
+  if(ADM.timer) startTimer();
+}
+
+function updClue(){
+  if(!G.cur) return;
+  const idx=G.clueIdx;
+  document.getElementById('clue-lbl').textContent=`CLUE ${idx+1} — ${CT[idx]}`;
+  document.getElementById('clue-n').textContent=`${idx+1}/4`;
+  document.getElementById('clue-txt').textContent=G.cur.clues[idx];
+  const extra=document.getElementById('clue-extra');
+  extra.innerHTML='';
+  if(idx>=1&&G.cur.region) extra.innerHTML+=`<span class="clue-chip">📍 ${G.cur.region}</span>`;
+  if(idx>=2&&G.cur.capital&&G.cur.capital!=='?') extra.innerHTML+=`<span class="clue-chip">🏛️ ${G.cur.capital}</span>`;
+  if(idx>=3&&G.cur.pop) extra.innerHTML+=`<span class="clue-chip">👥 ${(G.cur.pop/1e6).toFixed(1)}M</span>`;
+  if(idx>=3){ document.getElementById('hint-btn').disabled=true; document.getElementById('hint-btn').textContent='✅ All Clues Shown' }
+}
+
+document.getElementById('hint-btn').addEventListener('click',()=>{
+  if(G.clueIdx>=3) return;
+  const cost=hintCost();
+  if(!spendCoins(cost)){
+    showToast('💰 Not enough coins!'); return;
+  }
+  G.clueIdx++;
+  // spending coins doesn't reduce score — coins are separate economy
+  updClue();
+  if(MODE==='online'&&G.conn) G.conn.send({type:'clue',idx:G.clueIdx});
+});
+
+// ══════════════════════════════════════════════════════
+// TIMER
+// ══════════════════════════════════════════════════════
+function startTimer(){
+  const bar=document.getElementById('timer-bar');
+  let secs=ADM.timerSecs; const total=secs;
+  bar.style.transform='scaleX(1)'; bar.classList.remove('warning');
+  G.timerInt=setInterval(()=>{
+    secs--;
+    bar.style.transform=`scaleX(${secs/total})`;
+    if(secs<=10) bar.classList.add('warning');
+    if(secs<=0){ clearInterval(G.timerInt); if(!G.guessed) autoTimeOut(); }
+  },1000);
+}
+function autoTimeOut(){
+  showToast('⏰ TIME UP!');
+  G.hearts=Math.max(0,G.hearts-1); updH();
+  G.guessed=true;
+  const tgt=G.cur;
+  if(tgt.lat!==0){
+    const tm=L.marker([tgt.lat,tgt.lng],{icon:mkIcon(tgt.cca2,tgt.flag,'#639922')}).addTo(map);
+    tm.bindPopup(`<b>${tgt.flag} ${tgt.name}</b><br/>Time up!`).openPopup();
+    G.mkrs.push(tm);
+  }
+  setTimeout(()=>showResult({name:'Timeout',flag:'⏰',lat:tgt.lat,lng:tgt.lng,cca2:''},tgt,99999,false,0),800);
+}
+
+// ══════════════════════════════════════════════════════
+// AUTOCOMPLETE — real flag image, region, compass
+// ══════════════════════════════════════════════════════
+let acSel=-1;
+const GI=document.getElementById('guess-input');
+const GB=document.getElementById('guess-btn');
+const ACL=document.getElementById('ac-list');
+
+GI.addEventListener('input',()=>{
+  const v=GI.value.trim().toLowerCase(); ACL.innerHTML=''; acSel=-1;
+  if(!v){ ACL.classList.remove('open'); return }
+  const starts=COUNTRIES.filter(c=>c.name.toLowerCase().startsWith(v)).slice(0,6);
+  const contains=COUNTRIES.filter(c=>!c.name.toLowerCase().startsWith(v)&&c.name.toLowerCase().includes(v)).slice(0,3);
+  const uniq=[...new Map([...starts,...contains].map(x=>[x.name,x])).values()].slice(0,8);
+  if(!uniq.length){ ACL.classList.remove('open'); return }
+  uniq.forEach(c=>{
+    const d=document.createElement('div'); d.className='ac-item';
+    const n=c.name, vl=v, mi=n.toLowerCase().indexOf(vl);
+    const hl=mi>=0?n.slice(0,mi)+'<span class="m">'+n.slice(mi,mi+vl.length)+'</span>'+n.slice(mi+vl.length):n;
+    const fi=c.cca2?`<img src="https://flagcdn.com/w80/${c.cca2.toLowerCase()}.png" class="ac-flag-img" onerror="this.style.display='none'" loading="lazy">`:
+      `<span style="font-size:24px;width:32px;text-align:center">${c.flag}</span>`;
+    const compass = c.lat!==0?compassDir(c.lat,c.lng):'';
+    const compHtml = compass?`<span class="ac-compass">${compass}</span>`:'';
+    const regHtml = c.region?`<span class="ac-region">${c.region}</span>`:'';
+    const capHtml = c.capital&&c.capital!=='?'?`<span class="ac-capital">${c.capital}</span>`:'';
+    d.innerHTML=`${fi}<div class="ac-info"><div class="ac-name">${hl}</div><div class="ac-meta">${regHtml}${compHtml}${capHtml}</div></div>`;
+    d.addEventListener('mousedown',e=>{ e.preventDefault(); selC(c.name) });
+    d.addEventListener('touchend',e=>{ e.preventDefault(); selC(c.name) });
+    ACL.appendChild(d);
+  });
+  ACL.classList.add('open');
+});
+GI.addEventListener('keydown',e=>{
+  const its=ACL.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){ acSel=Math.min(acSel+1,its.length-1); hlAC(its) }
+  else if(e.key==='ArrowUp'){ acSel=Math.max(acSel-1,0); hlAC(its) }
+  else if(e.key==='Enter'){ if(acSel>=0&&its[acSel]){ const nm=its[acSel].querySelector('.ac-name'); selC(nm?nm.textContent.replace(/<[^>]+>/g,'').trim():GI.value) } else submitG() }
+  else if(e.key==='Escape') ACL.classList.remove('open');
+});
+function hlAC(its){ its.forEach((el,i)=>el.classList.toggle('sel',i===acSel)) }
+function selC(n){ GI.value=n; ACL.classList.remove('open'); ACL.innerHTML='' }
+document.addEventListener('click',e=>{ if(!e.target.closest('#search-panel')) ACL.classList.remove('open') });
+
+// ══════════════════════════════════════════════════════
+// GUESS — country stays same, up to 5 guesses
+// ══════════════════════════════════════════════════════
+GB.addEventListener('click',submitG);
+function submitG(){
+  if(G.guessed) return;
+  const v=GI.value.trim();
+  const c=COUNTRIES.find(x=>x.name.toLowerCase()===v.toLowerCase());
+  if(!c){ GI.classList.add('shake'); setTimeout(()=>GI.classList.remove('shake'),400); return }
+  // Prevent duplicate guesses
+  if(G.roundGuesses.find(g=>g.country.name===c.name)){
+    showToast('Already guessed that!'); return;
+  }
+  procGuess(c,true);
+}
+
+function procGuess(country,isP){
+  if(G.guessed&&isP) return;
+  clearInterval(G.timerInt);
+  document.getElementById('timer-bar').style.transform='scaleX(0)';
+  const tgt=G.cur;
+  const dist=hav(country.lat,country.lng,tgt.lat,tgt.lng);
+  const ok=country.name===tgt.name;
+  const cl=dist<100, fr=dist>800;
+
+  if(isP){
+    G.guessCount++;
+    G.roundGuesses.push({country, dist, ok, name:country.name});
+    updGuessTracker();
+    addGuessHistPanel(country, dist, ok);
+
+    // Place marker for this guess (wrong guesses show in red/amber, stay on map)
+    if(country.lat!==0){
+      const col=ok?'#639922':dist<1000?'#f59e0b':'#ff4b2b';
+      const m=L.marker([country.lat,country.lng],{icon:mkIcon(country.cca2,country.flag,col)}).addTo(map);
+      m.bindPopup(`<b>${country.flag} ${country.name}</b><br/>${ok?'✅ Target!':fmt(dist)+' away'}`);
+      G.mkrs.push(m);
+      if(!ok) m.openPopup();
+    }
+
+    addHist(country,dist,'');
+
+    if(ok){
+      // Correct! Calculate score
+      G.guessed=true;
+      const multi=diffMulti();
+      const baseScore=Math.round(Math.max(200,1000-(G.guessCount-1)*150-(G.clueIdx*hintCost()))*multi);
+      const pi=MODE==='pnp'?G.curP:0;
+      G.players[pi].score+=baseScore;
+
+      // Coins reward: more coins for fewer guesses
+      const coinReward=[100,70,50,30,10][G.guessCount-1]||10;
+      addCoins(coinReward);
+
+      if(G.streak!==undefined) G.streak++;
+      if(G.streak>=3) showToast(`🔥 ${G.streak} STREAK!`);
+      G.hearts=Math.min(5,G.hearts+1); updH(); updScore();
+      if(ADM.confetti) confetti();
+
+      // Show target flag marker
+      if(tgt.lat!==0){
+        const tm=L.marker([tgt.lat,tgt.lng],{icon:mkIcon(tgt.cca2,tgt.flag,'#639922')}).addTo(map);
+        tm.bindPopup(`<b>${tgt.flag} ${tgt.name}</b><br/>✅ Target!`).openPopup(); G.mkrs.push(tm);
+        map.setView([tgt.lat,tgt.lng],4);
+      }
+
+      if(MODE==='online'&&G.conn) G.conn.send({type:'guess',country:country.name,pts:baseScore});
+      if(MODE==='online'){ G._lg=country;G._ld=dist;G._lc=ok;G._lp=baseScore; chkBoth() }
+      else setTimeout(()=>showResult(country,tgt,dist,ok,baseScore),700);
+
+    } else {
+      // Wrong guess
+      if(G.guessCount>=5){
+        // Used all 5 guesses
+        G.guessed=true;
+        if(G.streak!==undefined) G.streak=0;
+        if(fr){ G.hearts=Math.max(0,G.hearts-1); updH(); }
+
+        // Reveal target
+        if(tgt.lat!==0){
+          const tm=L.marker([tgt.lat,tgt.lng],{icon:mkIcon(tgt.cca2,tgt.flag,'#639922')}).addTo(map);
+          tm.bindPopup(`<b>${tgt.flag} ${tgt.name}</b><br/>That was the target!`).openPopup(); G.mkrs.push(tm);
+          // draw line from last guess to target
+          if(country.lat!==0){
+            const ln=L.polyline([[country.lat,country.lng],[tgt.lat,tgt.lng]],{color:'#1a1a1a',weight:2,dashArray:'6,6',opacity:0.5}).addTo(map);
+            G.mkrs.push(ln);
+            map.fitBounds(L.latLngBounds([[country.lat,country.lng],[tgt.lat,tgt.lng]]).pad(0.4));
+          } else map.setView([tgt.lat,tgt.lng],4);
+        }
+
+        if(MODE==='online'&&G.conn) G.conn.send({type:'guess',country:country.name,pts:0});
+        if(MODE==='online'){ G._lg=country;G._ld=dist;G._lc=false;G._lp=0; chkBoth() }
+        else setTimeout(()=>showResult(country,tgt,dist,false,0),700);
+      } else {
+        // Still guesses left — keep playing, don't show result yet
+        GI.value='';
+        // small proximity feedback
+        if(ADM.proximity !== false){
+          if(dist<500) showToast(`🌡️ ${fmt(dist)} — Getting warm!`);
+          else if(dist<1500) showToast(`🌍 ${fmt(dist)} — Getting closer`);
+          else showToast(`❄️ ${fmt(dist)} — Far away`);
+        }
+        // re-enable input
+        if(ADM.timer) startTimer();
+      }
+    }
+  } else {
+    // AI opponent
+    const col=ok?'#8b5cf6':dist<500?'#a855f7':'#6d28d9';
+    if(country.lat!==0){
+      const m=L.marker([country.lat,country.lng],{icon:mkIcon(country.cca2,'🤖',col)}).addTo(map);
+      const d2=hav(country.lat,country.lng,tgt.lat,tgt.lng);
+      m.bindPopup(`<b>🤖 AI: ${country.name}</b><br/>${fmt(d2)}`); G.mkrs.push(m);
+      const ap=ok?Math.round(900*diffMulti()):Math.max(0,Math.round((2000-d2)/4*diffMulti()));
+      G.players[1].score+=ap; updScore(); addHist(country,d2,'🤖 AI');
+    }
+    document.getElementById('ai-badge').classList.remove('on');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// AI OPPONENT
+// ══════════════════════════════════════════════════════
+function doAI(){
+  if(G.guessed) return;
+  document.getElementById('ai-badge').classList.add('on');
+  setTimeout(()=>{
+    const radius={easy:3500,medium:2000,hard:800,unbeatable:150}[ADM.aiDiff]||2000;
+    const t=G.cur;
+    const lo=(Math.random()-.5)*(radius/111), lno=(Math.random()-.5)*(radius/111);
+    const al=Math.max(-85,Math.min(85,t.lat+lo)), aln=t.lng+lno;
+    let best=COUNTRIES[0], bd=Infinity;
+    COUNTRIES.forEach(c=>{ if(c.lat!==0){ const d=hav(c.lat,c.lng,al,aln); if(d<bd){bd=d;best=c} } });
+    procGuess(best,false);
+  },{easy:2000,medium:1500,hard:1000,unbeatable:500}[ADM.aiDiff]||1500);
+}
+
+// ══════════════════════════════════════════════════════
+// HISTORY TRAY
+// ══════════════════════════════════════════════════════
+function addHist(c,dist,who){
+  const d=document.createElement('div'); d.className='hi';
+  const dc=dist<300?'c':dist<1500?'m':'f';
+  const fi=c.cca2?`<img src="https://flagcdn.com/w40/${c.cca2.toLowerCase()}.png" class="hi-flag" onerror="this.style.display='none'">`:
+    `<span class="hi-flag-emoji">${c.flag}</span>`;
+  d.innerHTML=`${fi}<div class="hi-info"><div class="hi-name">${c.name}</div>${who?`<div class="hi-who">${who}</div>`:''}<div class="hi-dist ${dc}">${fmt(dist)}</div></div>`;
+  document.getElementById('hist-list').prepend(d);
+}
+
+// ══════════════════════════════════════════════════════
+// TOAST, COIN POP, CONFETTI
+// ══════════════════════════════════════════════════════
+function showToast(txt){
+  const t=document.getElementById('streak-toast');
+  t.textContent=txt; t.classList.add('show');
+  setTimeout(()=>{ t.classList.remove('show'); t.classList.add('hide'); setTimeout(()=>t.classList.remove('hide'),300) },1800);
+}
+function showCoinPop(txt){
+  const p=document.getElementById('coin-pop');
+  p.textContent='💰 '+txt; p.classList.add('show');
+  setTimeout(()=>{ p.classList.remove('show'); p.classList.add('hide'); setTimeout(()=>p.classList.remove('hide'),300) },1500);
+}
+function confetti(){
+  const emojis=['🎉','🌟','✨','🎊','🗺️','🌍','🏆'];
+  for(let i=0;i<22;i++){
+    setTimeout(()=>{
+      const el=document.createElement('div'); el.className='conf';
+      el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+      el.style.left=Math.random()*100+'vw'; el.style.animationDuration=(1+Math.random())+'s';
+      document.body.appendChild(el); setTimeout(()=>el.remove(),2000);
+    },i*80);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// RESULT MODAL
+// ══════════════════════════════════════════════════════
+function showResult(guessed,tgt,dist,ok,pts){
+  // Flag display
+  const fi=document.getElementById('r-flag-img');
+  const fe=document.getElementById('r-flag-emoji');
+  if(tgt.cca2){
+    fi.src=`https://flagcdn.com/w160/${tgt.cca2.toLowerCase()}.png`;
+    fi.style.display='block'; fe.style.display='none';
+  } else {
+    fe.textContent=tgt.flag; fe.style.display='block'; fi.style.display='none';
+  }
+  document.getElementById('r-title').textContent=tgt.name;
+  document.getElementById('r-sub').textContent=ok?`🎯 Got it in ${G.guessCount} guess${G.guessCount!==1?'es':''}! +${pts} pts`:`Ran out of guesses! +${pts} pts`;
+  const de=document.getElementById('r-dist');
+  de.textContent=ok?'🎯 CORRECT!':'❌ OUT OF GUESSES';
+  de.className=ok?'win':'loss';
+
+  // Guess trail
+  const rg=document.getElementById('r-guesses'); rg.innerHTML='';
+  if(G.roundGuesses.length){
+    G.roundGuesses.forEach((g,i)=>{
+      const cls=g.ok?'rg-correct':g.dist<1000?'rg-close':'rg-wrong';
+      const gfi=g.country.cca2?`<img src="https://flagcdn.com/w40/${g.country.cca2.toLowerCase()}.png" class="rg-flag-img" onerror="this.style.display='none'">`:
+        `<span style="font-size:16px">${g.country.flag}</span>`;
+      const r=document.createElement('div'); r.className=`rg-row ${cls}`;
+      r.innerHTML=`${gfi}<span class="rg-name">${i+1}. ${g.name}</span><span class="rg-dist">${g.ok?'✅ Correct!':fmt(g.dist)}</span>`;
+      rg.appendChild(r);
+    });
+  }
+
+  // Coins earned display
+  const ce=document.getElementById('r-coins-earned');
+  if(ok){
+    const coinReward=[100,70,50,30,10][G.guessCount-1]||10;
+    ce.textContent=`💰 +${coinReward} coins earned!`; ce.style.display='block';
+  } else { ce.style.display='none'; }
+
+  // Facts
+  const rf=document.getElementById('r-facts');
+  if(ADM.facts&&tgt.capital&&tgt.capital!=='?'){
+    rf.innerHTML=`🏛️ Capital: <b>${tgt.capital}</b> &nbsp;|&nbsp; 👥 Pop: <b>${tgt.pop?(tgt.pop/1e6).toFixed(1)+'M':'?'}</b> &nbsp;|&nbsp; 🗣️ <b>${tgt.langs||'?'}</b>`;
+    rf.classList.add('show');
+  } else rf.classList.remove('show');
+
+  // Scores
+  const rs=document.getElementById('r-scores'); rs.innerHTML='';
+  getAllPlayers().forEach(p=>{ const b=document.createElement('div'); b.className='rsb'; b.innerHTML=`<div class="rsb-n">${p.name}</div><div class="rsb-v">${p.score.toLocaleString()}</div>`; rs.appendChild(b) });
+
+  document.getElementById('result').classList.add('open');
+}
+
+document.getElementById('r-next').addEventListener('click',()=>{
+  document.getElementById('result').classList.remove('open');
+  if(MODE==='daily'){ saveDailyResult(); endGame(); return; }
+  G.round++;
+  if(G.round>G.totalRounds||G.hearts<=0){ endGame(); return }
+  if(MODE==='pnp'){
+    G.curP=G.curP===0?1:0;
+    const np=G.players[G.curP];
+    document.getElementById('ho-emoji').textContent='📱';
+    document.getElementById('ho-title').textContent=`Pass to ${np.name}!`;
+    document.getElementById('ho-sub').textContent=`${np.name}'s turn — cover the screen!`;
+    const hs=document.getElementById('ho-scores');
+    hs.innerHTML=G.players.map(p=>`<div class="ho-score"><div class="ho-score-n">${p.name}</div><div class="ho-score-v">${p.score}</div></div>`).join('');
+    document.getElementById('handoff').classList.add('open');
+  } else newRound();
+});
+document.getElementById('ho-btn').addEventListener('click',()=>{ document.getElementById('handoff').classList.remove('open'); newRound() });
+
+function saveDailyResult(){
+  const score=G.players[0].score;
+  const guesses=G.roundGuesses.map(g=>({name:g.name,dist:g.dist,ok:g.ok}));
+  localStorage.setItem(getTodayKey(),JSON.stringify({score,country:G.cur.name,flag:G.cur.flag,cca2:G.cur.cca2||'',guesses}));
+  LS_STATS.streak=(LS_STATS.streak||0)+1;
+  saveStats(score);
+}
+
+// ══════════════════════════════════════════════════════
+// GAME OVER
+// ══════════════════════════════════════════════════════
+function getAllPlayers(){
+  if(MODE==='solo'||MODE==='daily') return [{name:'You',score:G.players[0].score}];
+  if(MODE==='ai') return G.players;
+  if(MODE==='pnp') return [...G.players];
+  return [{name:'You',score:G.players[0].score},{name:G.oppName,score:G.oppScore}];
+}
+function endGame(){
+  clearInterval(G.timerInt);
+  const all=getAllPlayers();
+  const mx=Math.max(...all.map(p=>p.score));
+  const myScore=G.players[0].score;
+  saveScore('You',myScore); saveStats(myScore);
+  LS_STATS.streak=G.streak||0; saveStatsLS();
+
+  const e=G.hearts<=0?'💔':myScore>6000?'🏆':myScore>3000?'🧠':'🌍';
+  document.getElementById('go-emo').textContent=e;
+  const gs=document.getElementById('go-scores'); gs.innerHTML='';
+  all.forEach(p=>{ const b=document.createElement('div'); b.className='gsb'+(p.score===mx&&all.length>1?' win':''); b.innerHTML=`<div class="gsb-n">${p.name}</div><div class="gsb-v">${p.score.toLocaleString()}</div><div class="gsb-l">points</div>`; gs.appendChild(b) });
+  if(all.length>1){ const w=all.reduce((a,b)=>a.score>b.score?a:b); document.getElementById('go-win').textContent=`🏆 ${w.name} wins!` }
+  else document.getElementById('go-win').textContent=myScore>6000?'Outstanding intelligence!':myScore>3000?'Great world knowledge!':'Keep exploring the globe!';
+  const sb=document.getElementById('go-sb');
+  if(LS_SCORES.length>0){ sb.innerHTML='<div style="font-family:Space Mono,monospace;font-size:10px;letter-spacing:2px;color:#888;margin-bottom:8px">ALL TIME TOP SCORES</div>'+LS_SCORES.slice(0,5).map((s,i)=>`<div class="go-row"><span class="go-rank">#${i+1}</span><span style="flex:1">${s.name}</span><span style="font-family:Space Mono,monospace;font-size:13px;color:var(--green)">${s.score.toLocaleString()}</span></div>`).join('') }
+  // daily bonus coins for completing game
+  if(MODE!=='daily') addCoins(20);
+  document.getElementById('gameover').classList.add('open');
+}
+
+// ══════════════════════════════════════════════════════
+// MOBILE DETECTION
+// ══════════════════════════════════════════════════════
+function detectMobile(){
+  const mob=window.innerWidth<=640||('ontouchstart' in window);
+  document.documentElement.style.setProperty('--mob',mob?'1':'0');
+  document.getElementById('hist-tray').style.display=mob?'none':'flex';
+}
+let _vhSet = false;
+function setVH(){
+  // Fix for mobile browser address bar / keyboard
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--real-vh', `${vh}px`);
+}
+window.addEventListener('resize',()=>{ detectMobile(); setVH(); map.invalidateSize() });
+// On mobile, when keyboard pops up, don't resize map annoyingly
+window.visualViewport && window.visualViewport.addEventListener('resize', ()=>{
+  map.invalidateSize();
+});
+detectMobile();
+setVH();
+
+// ══════════════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════════════
+loadCountries();
+// Listen for storage changes from admin panel (cross-tab sync)
+window.addEventListener('storage', e=>{
+  if(e.key==='gb_adm'){
+    ADM = loadADM();
+    updHintBtn();
+  }
+  if(e.key==='gb_coins'||e.key==='gb_stats'){
+    LS_STATS = JSON.parse(localStorage.getItem('gb_stats')||'{"played":0,"best":0,"streak":0}');
+    const coinVal = parseInt(localStorage.getItem('gb_coins')||'0');
+    if(coinVal>0) LS_STATS.coins = coinVal;
+    updCoinDisplay();
+    loadStats();
+  }
+});
+</script>
+</body>
+</html>
