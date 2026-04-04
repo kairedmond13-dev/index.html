@@ -1,4 +1,33 @@
-<!DOCTYPE html>
+// Add this URL at the top of your <script> section
+const NPOINT_URL = 'https://api.npoint.io/1444bc19129e647161b5';
+
+async function saveAllSettings() {
+  const settings = {
+    rounds: parseInt(document.getElementById('set-rounds').value),
+    difficulty: document.getElementById('set-diff').value,
+    hints: document.getElementById('set-hints').checked,
+    multiplier: parseFloat(document.getElementById('set-mult').value)
+  };
+
+  try {
+    // This sends your local admin changes to the internet
+    const response = await fetch(NPOINT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    });
+
+    if (response.ok) {
+      setMsg('save-msg', 'green', '✅ UPDATED GLOBALLY!');
+      logActivity('Settings pushed to Cloud', 'green');
+      document.getElementById('save-banner').classList.remove('show');
+    }
+  } catch (err) {
+    console.error("Cloud Sync Error:", err);
+    alert("Could not sync to cloud. Using local storage instead.");
+  }
+}
+  <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
